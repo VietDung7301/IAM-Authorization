@@ -22,17 +22,18 @@ class ClientRepo:
         return ClientModel.query.all()
 
     @classmethod
-    def update(cls, id, type, credential):
+    def update(cls, id, client_type, client_secret, redirect_url):
         """ Update a client infor by its id """
         client = cls.get(id)
-        client.type = type
-        client.credential = credential
+        client.redirect_url = redirect_url
+        client.client_type = client_type
+        client.client_secret = client_secret
 
         return client.save()
 
     @staticmethod
-    def create(type, credential):
+    def create(client_secret, redirect_url, client_type):
         """ Create a new client """
-        client = ClientModel(type, credential)
+        client = ClientModel(client_secret, redirect_url, client_type)
 
         return client.save()

@@ -11,9 +11,11 @@ class ClientModel(db.Model, BaseModel, metaclass=MetaBaseModel):
     __tablename__ = "client"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    type = db.Column(db.Integer)
-    credential = db.Column(db.String(200))
+    client_secret = db.Column(db.String(200))
+    redirect_url = db.Column(db.String(1000))
+    client_type = db.Column(db.Integer)
 
-    def __init__(self, type, credential):
-        self.type = type,
-        self.credential = credential
+    def __init__(self, client_secret, redirect_url, client_type):
+        self.client_secret = client_secret,
+        self.redirect_url = redirect_url,
+        self.client_type = client_type

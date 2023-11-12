@@ -21,7 +21,7 @@ def upgrade():
     op.create_table('client',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('client_secret', sa.String(200), nullable=False),
-    sa.Column('redirect_url', sa.String(1000), nullable=False),
+    sa.Column('redirect_uri', sa.String(1000), nullable=False),
     sa.Column('client_type', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )

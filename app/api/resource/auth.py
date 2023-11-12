@@ -4,38 +4,38 @@ from flask import request
 import string
 import random
 
-class AuthLogin(Resource):
-    @staticmethod
-    def post():
-        # lay ra duoc username va pwd | form_data
-        data = request.form
+# class AuthLogin(Resource):
+#     @staticmethod
+#     def post():
+#         # lay ra duoc username va pwd | form_data
+#         data = request.form
 
-        # check credentials
-        if data.get('username') is None or \
-           data.get('password') is None:
-            return jsonify({
-                "error": {
-                    "status": 401,
-                    "detail": "unauthorized client",
-                }
-            })
+#         # check credentials
+#         if data.get('username') is None or \
+#            data.get('password') is None:
+#             return jsonify({
+#                 "error": {
+#                     "status": 401,
+#                     "detail": "unauthorized client",
+#                 }
+#             })
 
-        if data.get('state') != None:
-            state = data['state']
-        else:   
-            state = 'none'
+#         if data.get('state') != None:
+#             state = data['state']
+#         else:   
+#             state = 'none'
 
-        # generate code
-        code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
+#         # generate code
+#         code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
 
-        return jsonify({
-            "code":code,
-            "state":state
-        })
+#         return jsonify({
+#             "code":code,
+#             "state":state
+#         })
 
 class AuthCodeRequest(Resource):
     @staticmethod
-    def post():
+    def get():
         params = request.form
 
         # validate params
@@ -49,9 +49,20 @@ class AuthCodeRequest(Resource):
                 }
             })
 
+        # check response_type
         if params['response_type'] != 'code':
             return jsonify({
                 "message":"false",
+            })
+        
+        # check credentials
+        if params.get('username') is None or \
+           params.get('password') is None:
+            return jsonify({
+                "error": {
+                    "status": 401,
+                    "detail": "unauthorized client",
+                }
             })
 
         # other condition
@@ -62,16 +73,21 @@ class AuthCodeRequest(Resource):
         else:
             state = 'none'
 
+        # generate code
+        code = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(20))
+
+        # save code for checking
+
         return jsonify({
-            "message":"success",
-            "state": state
+            "code":code,
+            "state":state
         })
 
 
 class AuthTokenGrant(Resource):
     @staticmethod
     def get():
-        # check code, client_id, redirect_url
+        # check code, client_id, redirect_uri
 
         return jsonify({
             "access_token":"2YotnFZFEjr1zCsicMWpAA",

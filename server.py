@@ -2,10 +2,12 @@ from flasgger import Swagger
 from flask import Flask
 from flask.blueprints import Blueprint
 from flask_migrate import Migrate
+from flask_jwt_extended import JWTManager
 
 import config
 from app.api import route
 from app.extension import db
+
 
 # config your API specs
 # you can define multiple specs in the case your api has multiple versions
@@ -35,6 +37,10 @@ Swagger(server)
 server.debug = config.DEBUG
 server.config["SQLALCHEMY_DATABASE_URI"] = config.DB_URI
 server.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config.SQLALCHEMY_TRACK_MODIFICATIONS
+
+# JWT config
+server.config['JWT_SECRET_KEY'] = 'my-secret'
+jwt = JWTManager(server)
 
 db.init_app(server)
 db.app = server

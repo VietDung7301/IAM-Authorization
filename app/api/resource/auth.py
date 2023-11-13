@@ -1,6 +1,7 @@
 from flask_restful import Resource
 from flask.json import jsonify
 from flask import request
+from flask_jwt_extended import create_access_token
 import string
 import random
 
@@ -89,8 +90,11 @@ class AuthTokenGrant(Resource):
     def get():
         # check code, client_id, redirect_uri
 
+        # create access token
+        access_token = create_access_token(identity='username')
+
         return jsonify({
-            "access_token":"2YotnFZFEjr1zCsicMWpAA",
+            "access_token":access_token,
             "token_type":"example",
             "expires_in":3600,
             "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA",

@@ -6,6 +6,10 @@ APPLICATION_ROOT = os.getenv("APPLICATION_ROOT", "/api")
 HOST = os.getenv("APPLICATION_HOST")
 PORT = int(os.getenv("APPLICATION_PORT", "3000"))
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+REDIS_HOST = os.getenv("REDIS_HOST")
+REDIS_PORT = int(os.getenv("REDIS_PORT"))
+AUTH_CODE_EXP=int(os.getenv("AUTH_CODE_EXP"))
+TOKEN_EXP=int(os.getenv("TOKEN_EXP"))
 
 DB_CONTAINER = os.getenv("APPLICATION_DB_CONTAINER", "db")
 MYSQL = {

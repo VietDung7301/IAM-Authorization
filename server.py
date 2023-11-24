@@ -3,6 +3,7 @@ from flask import Flask
 from flask.blueprints import Blueprint
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 import config
 from app.api import route
@@ -41,6 +42,10 @@ server.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config.SQLALCHEMY_TRACK_MODIFI
 # JWT config
 server.config['JWT_SECRET_KEY'] = 'my-secret'
 jwt = JWTManager(server)
+
+# CORS config
+server.config["CORS_ALLOW_HEADERS"] = "*"
+CORS(server)
 
 db.init_app(server)
 db.app = server

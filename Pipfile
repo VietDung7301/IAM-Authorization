@@ -12,6 +12,8 @@ mysqlclient = "*"
 python-dotenv = "*"
 flasgger = "*"
 flask-migrate = "*"
+redis = "*"
+flask-cors = "*"
 
 [dev-packages]
 

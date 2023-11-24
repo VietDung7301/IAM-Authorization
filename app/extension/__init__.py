@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 import redis
+import config
 
 db = SQLAlchemy()
 
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+r = redis.Redis(host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True)

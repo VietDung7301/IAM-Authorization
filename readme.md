@@ -13,5 +13,5 @@ yarn install
 ## 1. How to run
 #### Khởi động server
 ```shell
-npm run dev
+yarn run dev
 ```

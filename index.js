@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: false, limit: '50mb', parameterLimit: 500
 /**
  * Import router dùng để bắt dữ liệu
  */
-router.use("", require("./modules/rating/route"));
+router.use("", require('./modules/auth/route'));
 
 
 app.use(router);
@@ -27,6 +27,9 @@ app.use(router);
 /**
  * Khởi động server
  */
+
+//console.log('at index.js: ' + DB_CONNECTION)
+
 const port = process.env.PORT;
 server.listen(port, () => {
     console.log(`Server up and running on: ${port} !`)

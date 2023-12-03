@@ -37,7 +37,7 @@ exports.AuthCodeGrant = async (req, res) => {
     // other condition
 
     // generate code
-    const code = helpers.CodeGen.generateCode(20)
+    const code = helpers.CodeGen.generateCode(20, data.scope != null && data.scope.includes('openid') ? true : false)
 
     // save code for checking
     helpers.Redis.saveAuthCode(code, data.client_id, user_id, process.env.AUTH_CODE_EXP)
@@ -51,6 +51,7 @@ exports.AuthCodeGrant = async (req, res) => {
 
 exports.TokenGrant = async (req, res) => {
     const data = req.body
+    
 
     if (data.grant_type == null ||
         data.code == null ||
@@ -72,7 +73,21 @@ exports.TokenGrant = async (req, res) => {
             }
         })
 
-    // check client_type
+    // authenticate client
+    const authorization = req.get('Authorization')
+
+    if (authorization != null) {
+        let arr = authorization.split(" ")
+        const secret = arr[1];
+
+        if (!false)
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: 'invalid client',
+                }
+            })
+    }
 
     // get code for checking
     const code = await helpers.Redis.getAuthCode(data.client_id, data.user_id)
@@ -93,21 +108,41 @@ exports.TokenGrant = async (req, res) => {
                 detail: "invalid request",
             }
         })
-    } 
-        
+    }
+    
+    // create id token jwt payload
+    let arr = code.split('@')
+    let id_token = ''
+    if (arr[1] == 'oid') {
+        // call to identity module
+        const id_token_claims = {
+            iss: 'watashi',
+            sub: data.user_id,
+            aud: 'postman',
+            exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
+            iat: Math.floor(Date.now() / 1000),
+            name: 'hoang anh',
+            preferred_username: 'wanderer',
+            email: 'abc@gmail.com',
+            phone_number: '0123456789'
+        }
 
-    // create jwt payload
-    const claims = {
+        id_token = helpers.JWT.genToken(id_token_claims)
+    }
+    
+
+    // create access token jwt payload
+    const access_token_claims = {
         iss: 'watashi',
         exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
         aud: 'postman',
-        sub: 'hoang anh',
+        sub: data.user_id,
         client_id: data.client_id,
         iat: Math.floor(Date.now() / 1000),
         jti: 'jwtid'
     }
 
-    const access_token = helpers.JWT.genToken(claims)
+    const access_token = helpers.JWT.genToken(access_token_claims)
     const refresh_token = ''
 
     helpers.Redis.saveAccessToken(access_token, process.env.TOKEN_EXP, data.client_id, data.user_id)
@@ -118,7 +153,7 @@ exports.TokenGrant = async (req, res) => {
         token_type: 'Bearer',
         expires_in: process.env.TOKEN_EXP,
         refresh_token: refresh_token,
-        id_token: 'dadacdaw21',
+        id_token: id_token,
     })
 }
 

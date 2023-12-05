@@ -5,17 +5,15 @@
 const { Sequelize } = require('sequelize');
 const { models } = require('./models')
 
-
 const initModels = (db, models) => {
     console.log('init model')
     for (const [key, value] of Object.entries(models)) {
         db.define(value.modelConfig.name, value.modelConfig.attributes)
     }
     console.log('finish init')
-    // console.log(db.models);
 }
 
-module.exports = async(server) => {
+module.exports = async (server) => {
     let connectOptions = {
         useNewUrlParser: true,
         useUnifiedTopology: true,
@@ -30,6 +28,12 @@ module.exports = async(server) => {
         dialect: 'mysql'
     })
 
-    //const client1 = Client.build({client_secret: '123', redirect_uri: '123', client_type: '123'})
-    initModels(DB_CONNECTION, models);
+    try {
+        await DB_CONNECTION.authenticate();
+        console.log('Connection has been established successfully.');
+    } catch (error) {
+        console.error('Unable to connect to the database:', error);
+    }
+
+    initModels(DB_CONNECTION, models)
 }

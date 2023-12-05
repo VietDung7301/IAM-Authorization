@@ -1,8 +1,14 @@
-// const mongoose = require("mongoose")
-// const ProductRating = require("../models/productRating")
 const { Sequelize } = require('sequelize');
-const Client = require('../models/client')
+const { models } = require('../models')
 require("dotenv").config();
+
+const initModels = (db, models) => {
+    console.log('init model')
+    for (const [key, value] of Object.entries(models)) {
+        db.define(value.modelConfig.name, value.modelConfig.attributes)
+    }
+    console.log('finish init')
+}
 
 const initDB = async () => {
     console.log("Starting init database. Please wait...\n");
@@ -24,17 +30,13 @@ const initDB = async () => {
         dialect: 'mysql'
     })
 
-    try {
-        await sequelize.authenticate();
-        console.log('Connection has been established successfully.');
-    } catch (error) {
-        console.error('Unable to connect to the database:', error);
-    }
+    
 
     /**
-     * 2. Xóa dữ liệu cũ và khởi tạo dữ liệu mới
+     * Xóa dữ liệu cũ và khởi tạo dữ liệu mới
      */
-    // systemDB.dropDatabase();
+    initModels(sequelize, models)
+
     console.log("@Setup new database")
     await sequelize.sync({ force: true });
     console.log("All models were synchronized successfully.");

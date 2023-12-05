@@ -4,9 +4,8 @@ const modelConfig = {
     name: 'Client',
     attributes: {
         id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING,
             primaryKey: true,
-            autoIncrement: true
         },
         client_secret: {
             type: DataTypes.STRING,
@@ -14,12 +13,24 @@ const modelConfig = {
         },
         redirect_uri: {
             type: DataTypes.TEXT,
-            allowNull: false
+            allowNull: false,
         },
         client_type: {
             type: DataTypes.BOOLEAN,
-            allowNull: false
-        }
+            allowNull: false,
+        },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        homepage_url: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
     }
 }
 

@@ -74,20 +74,35 @@ exports.TokenGrant = async (req, res) => {
         })
 
     // authenticate client
-    const authorization = req.get('Authorization')
+    // get client_type
+    // const client_type = true
+    
+    // if (client_type) {
+    //     const authorization = req.get('Authorization')
 
-    if (authorization != null) {
-        let arr = authorization.split(" ")
-        const secret = arr[1];
+    //     if (authorization != null) {
+    //         let arr = authorization.split(" ")
+    //         const secret = arr[1];
 
-        if (!false)
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: 'invalid client',
-                }
-            })
-    }
+    //         // check secret == client_secret ?
+
+    //         if (!false)
+    //             return res.status(400).json({
+    //                 error: {
+    //                     status: 400,
+    //                     detail: 'invalid client',
+    //                 }
+    //             })
+    //     }
+    //     else {
+    //         return res.status(400).json({
+    //             error: {
+    //                 status: 400,
+    //                 detail: 'invalid client',
+    //             }
+    //         })
+    //     }
+    // }
 
     // get code for checking
     const code = await helpers.Redis.getAuthCode(data.client_id, data.user_id)
@@ -101,7 +116,7 @@ exports.TokenGrant = async (req, res) => {
         })
 
     if (code != data.code) {
-        console.log('code ko dung ' + code)
+        //console.log('code ko dung ' + code)
         return res.status(400).json({
             error: {
                 status: 400,
@@ -116,15 +131,39 @@ exports.TokenGrant = async (req, res) => {
     if (arr[1] == 'oid') {
         // call to identity module
         const id_token_claims = {
-            iss: 'watashi',
+            iss: `https://${process.env.HOST}:${process.env.PORT}`,
             sub: data.user_id,
-            aud: 'postman',
+            aud: [
+                data.client_id,
+            ],
             exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
             iat: Math.floor(Date.now() / 1000),
             name: 'hoang anh',
+            given_name: '',
+            family_name: '',
+            middle_name: '',
+            nickname: '',
             preferred_username: 'wanderer',
+            profile: '',
+            picture: '',
+            website: '',
             email: 'abc@gmail.com',
-            phone_number: '0123456789'
+            email_verified: true,
+            gender: 'male',
+            birthdate: '',
+            zoneinfo: '',
+            locale: '',
+            phone_number: '0123456789',
+            phone_number_verified: true,
+            address: {
+                formatted: '',
+                street_address: '',
+                locality: '',
+                region: '',
+                postal_code: '',
+                country: '',
+            },
+            updated_at: 123,
         }
 
         id_token = helpers.JWT.genToken(id_token_claims)
@@ -133,9 +172,11 @@ exports.TokenGrant = async (req, res) => {
 
     // create access token jwt payload
     const access_token_claims = {
-        iss: 'watashi',
+        iss: `https://${process.env.HOST}:${process.env.PORT}`,
         exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
-        aud: 'postman',
+        aud: [
+            data.client_id,
+        ],
         sub: data.user_id,
         client_id: data.client_id,
         iat: Math.floor(Date.now() / 1000),
@@ -157,6 +198,39 @@ exports.TokenGrant = async (req, res) => {
     })
 }
 
-exports.ClientRegistration = async (req, res) => {
+exports.RefreshToken = async (req, res) => {
 
+}
+
+exports.ClientRegistration = async (req, res) => {
+    const data = req.body
+
+    if (data.redirect_uri == null ||
+        data.homepage_url == null ||
+        data.name == null)
+        return res.status(400).json({
+            error: {
+                status: 400,
+                detail: "invalid request",
+            }
+        })
+    
+    const client_id = Math.floor(Math.random() * (9999 - 1) + 1);
+    // const client_secret = '';
+    
+    const config = {
+        id: client_id,
+        client_secret: '123',
+        redirect_uri: data.redirect_uri,
+        client_type: true,
+        name: data.name,
+        homepage_url: data.homepage_url,
+        description: data.description != null ? data.description : null,
+    }
+
+    await service.createClient(config)
+
+    return res.status(200).json({
+        client_secret: '123'
+    })
 }

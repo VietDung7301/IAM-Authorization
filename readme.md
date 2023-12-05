@@ -10,7 +10,12 @@ Chuyển đường dẫn về server, sau đó chạy lệnh instal như dưới
 ```shell
 yarn install
 ```
-## 1. How to run
+## 2. Init DB
+#### Chạy DB
+```shell
+yarn db
+```
+## 2. How to run
 #### Khởi động server
 ```shell
 yarn run dev

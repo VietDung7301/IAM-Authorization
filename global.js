@@ -36,4 +36,8 @@ module.exports = async (server) => {
     }
 
     initModels(DB_CONNECTION, models)
+
+    console.log("Synching models")
+    await DB_CONNECTION.sync();
+    console.log("All models were synchronized successfully.");
 }

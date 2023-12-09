@@ -8,8 +8,10 @@ const ClientValidation = async (client_id, client_secret) => {
         id: client_id,
         client_secret: client_secret
     }
+
+    const client = await service.getClient(config)
     
-    return await service.getClient(config)
+    return client
 }
 
 const UserValidation = (username, password) => {
@@ -88,14 +90,16 @@ exports.TokenGrant = async (req, res) => {
         if (authorization != null) {
             let arr = authorization.split(" ")
             const secret = arr[1];
-    
-            if (!ClientValidation(data.client_id, secret))
+            const client = await ClientValidation(data.client_id, secret)
+
+            if (!client) {
                 return res.status(400).json({
                     error: {
                         status: 400,
                         detail: 'invalid client',
                     }
                 })
+            }
         } else {
             return res.status(400).json({
                 error: {
@@ -137,14 +141,16 @@ exports.TokenGrant = async (req, res) => {
         if (authorization != null) {
             let arr = authorization.split(" ")
             const secret = arr[1];
+            const client = await ClientValidation(data.client_id, secret)
     
-            if (!ClientValidation(data.client_id, secret))
+            if (!client) {
                 return res.status(400).json({
                     error: {
                         status: 400,
                         detail: 'invalid client',
                     }
                 })
+            }
         } else {
             return res.status(400).json({
                 error: {
@@ -172,6 +178,8 @@ exports.TokenGrant = async (req, res) => {
                     detail: "invalid code",
                 }
             })
+        } else {
+            helpers.Redis.removeAuthCode(data.client_id, data.user_id)
         }
         
         // create id token jwt payload
@@ -241,8 +249,6 @@ exports.TokenGrant = async (req, res) => {
     access_token = helpers.JWT.genToken(access_token_claims)
     refresh_token = helpers.Generator.generateCode(50)
 
-    // luu trong redis
-
     helpers.Redis.saveAccessToken(access_token, process.env.TOKEN_EXP, data.client_id, data.user_id)
     helpers.Redis.saveRefreshToken(refresh_token, data.client_id, data.user_id)
 
@@ -291,7 +297,7 @@ exports.ClientRegistration = async (req, res) => {
 }
 
 exports.Test = async (req, res) => {
-    const client = await ClientValidation(123, 124)
+    const client = await ClientValidation('123', '123d')
 
     if (!client)
         return res.status(400).json({

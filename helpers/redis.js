@@ -28,6 +28,11 @@ const getAuthCode = async (client_id, user_id) => {
     return content.code
 }
 
+const removeAuthCode = async (client_id, user_id) => {
+    const key = user_id + '@' + client_id + 'code'
+    return await client.del(key)
+}
+
 const saveAccessToken = async (access_token, expires_in, client_id, user_id) => {
     const key = client_id + '@' + user_id + 'AccessToken'
     const content = {
@@ -59,4 +64,4 @@ const getRefreshToken = async (client_id, user_id) => {
     return content.token
 }
 
-module.exports = { saveAuthCode, getAuthCode, saveAccessToken, saveRefreshToken, getRefreshToken }
+module.exports = { saveAuthCode, getAuthCode, saveAccessToken, saveRefreshToken, getRefreshToken, removeAuthCode }

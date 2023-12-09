@@ -3,7 +3,7 @@ const client = createClient({
     url: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
 });
 
-client.on('error', err => console.log('Redis Client Error', err));
+client.on('error', err => console.log('Redis client Error', err));
 client.connect();
 
 const saveAuthCode = async (code, client_id, user_id, exp) => {
@@ -48,4 +48,15 @@ const saveRefreshToken = async (refresh_token, client_id, user_id) => {
     await client.set(key, JSON.stringify(content))
 }
 
-module.exports = { saveAuthCode, getAuthCode, saveAccessToken, saveRefreshToken }
+const getRefreshToken = async (client_id, user_id) => {
+    const key = client_id + '@' + user_id + 'RefreshToken'
+    const value = await client.get(key)
+    const content = JSON.parse(value)
+
+    if (content == null)
+        return false
+
+    return content.token
+}
+
+module.exports = { saveAuthCode, getAuthCode, saveAccessToken, saveRefreshToken, getRefreshToken }

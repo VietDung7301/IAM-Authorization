@@ -1,5 +1,5 @@
 module.exports = {
-    CodeGen: require('./codeGenerate'),
+    Generator: require('./generator'),
     Redis: require('./redis'),
     JWT: require('./jwt')
 }

@@ -2,6 +2,23 @@ const service = require("./service");
 const helpers = require('../../helpers');
 const { json } = require("body-parser");
 
+const ClientValidation = async (client_id, client_secret) => {
+    // authenticate client
+    const config = {
+        id: client_id,
+        client_secret: client_secret
+    }
+    
+    return await service.getClient(config)
+}
+
+const UserValidation = (username, password) => {
+    // call to identity module and validate user
+    const user_id = '123'
+    
+    return user_id
+}
+
 exports.AuthCodeGrant = async (req, res) => {
     const data = req.body
 
@@ -31,13 +48,12 @@ exports.AuthCodeGrant = async (req, res) => {
             }
         })
 
-    // call to identity module and validate user
-    const user_id = '123'
+    const user_id = UserValidation(data.username, data.password)
 
     // other condition
 
     // generate code
-    const code = helpers.CodeGen.generateCode(20, data.scope != null && data.scope.includes('openid') ? true : false)
+    const code = helpers.Generator.generateCode(20, data.scope != null && data.scope.includes('openid') ? true : false)
 
     // save code for checking
     helpers.Redis.saveAuthCode(code, data.client_id, user_id, process.env.AUTH_CODE_EXP)
@@ -50,125 +66,164 @@ exports.AuthCodeGrant = async (req, res) => {
 }
 
 exports.TokenGrant = async (req, res) => {
+    let id_token = ''
+    let access_token = ''
+    let refresh_token = ''
     const data = req.body
     
+    if (data.grant_type != null && data.grant_type == 'refresh_token') {
+        if (data.refresh_token == null ||
+            data.client_id == null ||
+            data.user_id == null)
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: 'invalid request',
+                }
+            })
+        
+        // authenticate client
+        const authorization = req.get('Authorization')
 
-    if (data.grant_type == null ||
-        data.code == null ||
-        data.redirect_uri == null ||
-        data.client_id == null ||
-        data.user_id == null)
+        if (authorization != null) {
+            let arr = authorization.split(" ")
+            const secret = arr[1];
+    
+            if (!ClientValidation(data.client_id, secret))
+                return res.status(400).json({
+                    error: {
+                        status: 400,
+                        detail: 'invalid client',
+                    }
+                })
+        } else {
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: 'invalid client',
+                }
+            })
+        }
+
+        const refresh_token = await helpers.Redis.getRefreshToken(data.client_id, data.user_id)
+        
+        if (refresh_token != data.refresh_token) {
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: "invalid refresh token",
+                }
+            })
+        }
+
+    } else if (data.grant_type != null && data.grant_type == 'authorization_code') {
+
+        if (data.code == null ||
+            data.redirect_uri == null ||
+            data.client_id == null ||
+            data.user_id == null)
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: 'invalid request',
+                }
+            })
+
+        // check redirect_uri
+    
+        // authenticate client
+        const authorization = req.get('Authorization')
+
+        if (authorization != null) {
+            let arr = authorization.split(" ")
+            const secret = arr[1];
+    
+            if (!ClientValidation(data.client_id, secret))
+                return res.status(400).json({
+                    error: {
+                        status: 400,
+                        detail: 'invalid client',
+                    }
+                })
+        } else {
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: 'invalid client',
+                }
+            })
+        }
+    
+        // get code for checking
+        const code = await helpers.Redis.getAuthCode(data.client_id, data.user_id)
+    
+        if (!code)
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: "code expired!",
+                }
+            })
+    
+        if (code != data.code) {
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: "invalid code",
+                }
+            })
+        }
+        
+        // create id token jwt payload
+        let arr = code.split('@')
+        if (arr[1] == 'oid') {
+            // call to identity module
+            const id_token_claims = {
+                iss: `https://${process.env.HOST}:${process.env.PORT}`,
+                sub: data.user_id,
+                aud: [
+                    data.client_id,
+                ],
+                exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
+                iat: Math.floor(Date.now() / 1000),
+                name: 'hoang anh',
+                given_name: '',
+                family_name: '',
+                middle_name: '',
+                nickname: '',
+                preferred_username: 'wanderer',
+                profile: '',
+                picture: '',
+                website: '',
+                email: 'abc@gmail.com',
+                email_verified: true,
+                gender: 'male',
+                birthdate: '',
+                zoneinfo: '',
+                locale: '',
+                phone_number: '0123456789',
+                phone_number_verified: true,
+                address: {
+                    formatted: '',
+                    street_address: '',
+                    locality: '',
+                    region: '',
+                    postal_code: '',
+                    country: '',
+                },
+                updated_at: 123,
+            }
+    
+            id_token = helpers.JWT.genToken(id_token_claims)
+        }
+    } else {
         return res.status(400).json({
             error: {
                 status: 400,
                 detail: 'invalid request',
             }
         })
-
-    if (data.grant_type != 'authorization_code')
-        return res.status(405).json({
-            error: {
-                status: 405,
-                detail: "unsupported response type",
-            }
-        })
-
-    // authenticate client
-    // get client_type
-    // const client_type = true
-    
-    // if (client_type) {
-    //     const authorization = req.get('Authorization')
-
-    //     if (authorization != null) {
-    //         let arr = authorization.split(" ")
-    //         const secret = arr[1];
-
-    //         // check secret == client_secret ?
-
-    //         if (!false)
-    //             return res.status(400).json({
-    //                 error: {
-    //                     status: 400,
-    //                     detail: 'invalid client',
-    //                 }
-    //             })
-    //     }
-    //     else {
-    //         return res.status(400).json({
-    //             error: {
-    //                 status: 400,
-    //                 detail: 'invalid client',
-    //             }
-    //         })
-    //     }
-    // }
-
-    // get code for checking
-    const code = await helpers.Redis.getAuthCode(data.client_id, data.user_id)
-
-    if (!code)
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: "code expired!",
-            }
-        })
-
-    if (code != data.code) {
-        //console.log('code ko dung ' + code)
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: "invalid request",
-            }
-        })
     }
-    
-    // create id token jwt payload
-    let arr = code.split('@')
-    let id_token = ''
-    if (arr[1] == 'oid') {
-        // call to identity module
-        const id_token_claims = {
-            iss: `https://${process.env.HOST}:${process.env.PORT}`,
-            sub: data.user_id,
-            aud: [
-                data.client_id,
-            ],
-            exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
-            iat: Math.floor(Date.now() / 1000),
-            name: 'hoang anh',
-            given_name: '',
-            family_name: '',
-            middle_name: '',
-            nickname: '',
-            preferred_username: 'wanderer',
-            profile: '',
-            picture: '',
-            website: '',
-            email: 'abc@gmail.com',
-            email_verified: true,
-            gender: 'male',
-            birthdate: '',
-            zoneinfo: '',
-            locale: '',
-            phone_number: '0123456789',
-            phone_number_verified: true,
-            address: {
-                formatted: '',
-                street_address: '',
-                locality: '',
-                region: '',
-                postal_code: '',
-                country: '',
-            },
-            updated_at: 123,
-        }
-
-        id_token = helpers.JWT.genToken(id_token_claims)
-    }
-    
 
     // create access token jwt payload
     const access_token_claims = {
@@ -183,8 +238,10 @@ exports.TokenGrant = async (req, res) => {
         jti: 'jwtid'
     }
 
-    const access_token = helpers.JWT.genToken(access_token_claims)
-    const refresh_token = ''
+    access_token = helpers.JWT.genToken(access_token_claims)
+    refresh_token = helpers.Generator.generateCode(50)
+
+    // luu trong redis
 
     helpers.Redis.saveAccessToken(access_token, process.env.TOKEN_EXP, data.client_id, data.user_id)
     helpers.Redis.saveRefreshToken(refresh_token, data.client_id, data.user_id)
@@ -196,10 +253,6 @@ exports.TokenGrant = async (req, res) => {
         refresh_token: refresh_token,
         id_token: id_token,
     })
-}
-
-exports.RefreshToken = async (req, res) => {
-
 }
 
 exports.ClientRegistration = async (req, res) => {
@@ -217,6 +270,7 @@ exports.ClientRegistration = async (req, res) => {
     
     const client_id = Math.floor(Math.random() * (9999 - 1) + 1);
     // const client_secret = '';
+    // issue refresh token
     
     const config = {
         id: client_id,
@@ -231,6 +285,25 @@ exports.ClientRegistration = async (req, res) => {
     await service.createClient(config)
 
     return res.status(200).json({
-        client_secret: '123'
+        client_secret: '123',
+        refresh_token: ''
+    })
+}
+
+exports.Test = async (req, res) => {
+    const client = await ClientValidation(123, 124)
+
+    if (!client)
+        return res.status(400).json({
+            error: {
+                status: 400,
+                detail: 'invalid client',
+            }
+        })
+    
+    console.log("success! " + client)
+
+    return res.status(200).json({
+        data: client
     })
 }

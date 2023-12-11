@@ -1,19 +1,22 @@
-function generateCode(length, isOID = false) {
-  let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const charactersLength = characters.length;
-  let counter = 0;
-  while (counter < length) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    counter += 1;
-  }
+const base64 = require("base-64")
+const e = require("express")
+const utf8 = require("utf8")
 
-  if (isOID)
-    result = result + '@oid'
-  else
-    result = result + '@noid'
-
-  return result;
+function generateCode(data) {
+  let encoded = base64.encode(utf8.encode(JSON.stringify(data)))
+  return encoded
 }
 
-module.exports = { generateCode }
+function getDataFromCode(code) {
+  let data = ''
+  try {
+    let decoded = utf8.decode(base64.decode(code)) 
+    data = JSON.parse(decoded)
+  } catch (error) {
+    console.log(error)
+    return false
+  }
+  return data
+}
+
+module.exports = { generateCode, getDataFromCode }

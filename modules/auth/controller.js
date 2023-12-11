@@ -1,5 +1,7 @@
 const service = require("./service");
 const helpers = require('../../helpers');
+const randomstring = require("randomstring");
+const Crypto = require("crypto-js");
 const { json } = require("body-parser");
 
 const ClientValidation = async (client_id, client_secret) => {
@@ -55,7 +57,14 @@ exports.AuthCodeGrant = async (req, res) => {
     // other condition
 
     // generate code
-    const code = helpers.Generator.generateCode(20, data.scope != null && data.scope.includes('openid') ? true : false)
+    // co the nen de rieng khai bao cac truong cua code
+    const code = helpers.Generator.generateCode({
+        user_id: user_id,
+        client_id: data.client_id,
+        scope: data?.scope,
+        redirect_uri: data.redirect_uri,
+        created_at: Math.floor(Date.now() / 1000),
+    })
 
     // save code for checking
     helpers.Redis.saveAuthCode(code, data.client_id, user_id, process.env.AUTH_CODE_EXP)
@@ -75,8 +84,7 @@ exports.TokenGrant = async (req, res) => {
     
     if (data.grant_type != null && data.grant_type == 'refresh_token') {
         if (data.refresh_token == null ||
-            data.client_id == null ||
-            data.user_id == null)
+            data.client_id == null)
             return res.status(400).json({
                 error: {
                     status: 400,
@@ -124,8 +132,7 @@ exports.TokenGrant = async (req, res) => {
 
         if (data.code == null ||
             data.redirect_uri == null ||
-            data.client_id == null ||
-            data.user_id == null)
+            data.client_id == null)
             return res.status(400).json({
                 error: {
                     status: 400,
@@ -161,13 +168,15 @@ exports.TokenGrant = async (req, res) => {
         }
     
         // get code for checking
-        const code = await helpers.Redis.getAuthCode(data.client_id, data.user_id)
+        const dataFromCode = helpers.Generator.getDataFromCode(data.code) ? helpers.Generator.getDataFromCode(data.code) : undefined
+
+        const code = await helpers.Redis.getAuthCode(dataFromCode?.client_id, dataFromCode?.user_id)
     
         if (!code)
             return res.status(400).json({
                 error: {
                     status: 400,
-                    detail: "code expired!",
+                    detail: "code invalid!",
                 }
             })
     
@@ -179,12 +188,20 @@ exports.TokenGrant = async (req, res) => {
                 }
             })
         } else {
-            helpers.Redis.removeAuthCode(data.client_id, data.user_id)
+            helpers.Redis.removeAuthCode(dataFromCode.client_id, dataFromCode.user_id)
+        }
+
+        if (data.redirect_uri != dataFromCode?.redirect_uri) {
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: "redirect_uri invalid!",
+                }
+            })
         }
         
         // create id token jwt payload
-        let arr = code.split('@')
-        if (arr[1] == 'oid') {
+        if (dataFromCode.scope != undefined && dataFromCode.scope.includes("openid")) {
             // call to identity module
             const id_token_claims = {
                 iss: `https://${process.env.HOST}:${process.env.PORT}`,
@@ -247,7 +264,7 @@ exports.TokenGrant = async (req, res) => {
     }
 
     access_token = helpers.JWT.genToken(access_token_claims)
-    refresh_token = helpers.Generator.generateCode(50)
+    refresh_token = randomstring.generate(30)
 
     helpers.Redis.saveAccessToken(access_token, process.env.TOKEN_EXP, data.client_id, data.user_id)
     helpers.Redis.saveRefreshToken(refresh_token, data.client_id, data.user_id)
@@ -274,13 +291,13 @@ exports.ClientRegistration = async (req, res) => {
             }
         })
     
-    const client_id = Math.floor(Math.random() * (9999 - 1) + 1);
-    // const client_secret = '';
-    // issue refresh token
+    const client_id = randomstring.generate(20)
+    const client_secret = randomstring.generate(20)
+    const hash = Crypto.SHA256(client_secret)
     
     const config = {
         id: client_id,
-        client_secret: '123',
+        client_secret: hash.toString(Crypto.enc.Hex),
         redirect_uri: data.redirect_uri,
         client_type: true,
         name: data.name,
@@ -291,8 +308,8 @@ exports.ClientRegistration = async (req, res) => {
     await service.createClient(config)
 
     return res.status(200).json({
-        client_secret: '123',
-        refresh_token: ''
+        client_id: client_id,
+        client_secret: client_secret
     })
 }
 

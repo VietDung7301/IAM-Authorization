@@ -10,7 +10,26 @@ const initModels = (db, models) => {
     for (const [key, value] of Object.entries(models)) {
         db.define(value.modelConfig.name, value.modelConfig.attributes)
     }
-    console.log('finish init')
+    console.log('init relationships')
+    for (const [key, value] of Object.entries(models)) {
+        if (value.modelConfig.associations != undefined) {
+            value.modelConfig.associations.forEach((association) => {
+                if (association.relation == 'hasOne') {
+                    db.models[value.modelConfig.name]?.hasOne(db.models[association.target], association?.options)
+                }
+                else if (association.relation == 'hasMany') {
+                    db.models[value.modelConfig.name]?.hasMany(db.models[association.target], association?.options)
+                }
+                else if (association.relation == 'belongsTo') {
+                    db.models[value.modelConfig.name]?.belongsTo(db.models[association.target], association?.options)
+                }
+                else if (association.relation == 'belongsToMany') {
+                    db.models[value.modelConfig.name]?.belongsToMany(db.models[association.target], association?.options)
+                }
+            })
+        }
+    }
+    console.log('finish init model')
 }
 
 module.exports = async (server) => {
@@ -36,7 +55,7 @@ module.exports = async (server) => {
     }
 
     initModels(DB_CONNECTION, models)
-
+    //console.log(await DB_CONNECTION.models['Client'].findAll())
     console.log("Synching models")
     await DB_CONNECTION.sync();
     console.log("All models were synchronized successfully.");

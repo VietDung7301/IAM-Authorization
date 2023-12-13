@@ -7,6 +7,29 @@ const initModels = (db, models) => {
     for (const [key, value] of Object.entries(models)) {
         db.define(value.modelConfig.name, value.modelConfig.attributes)
     }
+    console.log('init relationships')
+    for (const [key, value] of Object.entries(models)) {
+        if (value.modelConfig.associations != undefined) {
+            value.modelConfig.associations.forEach((association) => {
+                if (association.relation == 'hasOne') {
+                    console.log('1')
+                    db.models[value.modelConfig.name]?.hasOne(db.models[association.target], association?.options)
+                }
+                else if (association.relation == 'hasMany') {
+                    console.log('2')
+                    db.models[value.modelConfig.name]?.hasMany(db.models[association.target], association?.options)
+                }
+                else if (association.relation == 'belongsTo') {
+                    console.log('3')
+                    db.models[value.modelConfig.name]?.belongsTo(db.models[association.target], association?.options)
+                }
+                else if (association.relation == 'belongsToMany') {
+                    console.log('4')
+                    db.models[value.modelConfig.name]?.belongsToMany(db.models[association.target], association?.options)
+                }
+            })
+        }
+    }
     console.log('finish init')
 }
 

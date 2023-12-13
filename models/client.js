@@ -31,7 +31,14 @@ const modelConfig = {
             type: DataTypes.TEXT,
             allowNull: true,
         },
-    }
+    }, 
+    // associations: [
+    //     {
+    //         relation: '',
+    //         target: '',
+    //         options: '',
+    //     },
+    // ]
 }
 
 module.exports = { modelConfig }

@@ -36,7 +36,7 @@ const modelConfig = {
     //     {
     //         relation: '',
     //         target: '',
-    //         options: '',
+    //         options: {},
     //     },
     // ]
 }

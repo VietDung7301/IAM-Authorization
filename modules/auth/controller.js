@@ -1,5 +1,6 @@
 const service = require("./service");
 const helpers = require('../../helpers');
+const iden = require('../identity/controller')
 const randomstring = require("randomstring");
 const Crypto = require("crypto-js");
 const { json } = require("body-parser");
@@ -16,11 +17,18 @@ const ClientValidation = async (client_id, client_secret) => {
     return client
 }
 
-const UserValidation = (username, password) => {
+const UserValidation = async (username, password) => {
     // call to identity module and validate user
-    const user_id = '123'
+    const config = {
+        username: username,
+        password: password,
+    }
+    const user = await iden.AuthenUser(config)
     
-    return user_id
+    if (!user)
+        return false
+
+    return user.id
 }
 
 exports.AuthCodeGrant = async (req, res) => {
@@ -52,7 +60,14 @@ exports.AuthCodeGrant = async (req, res) => {
             }
         })
 
-    const user_id = UserValidation(data.username, data.password)
+    const user_id = await UserValidation(data.username, data.password)
+    if (!user_id)
+        return res.status(401).json({
+            error: {
+                status: 401,
+                detail: 'unauthorized user'
+            }
+        })
 
     // other condition
 

@@ -71,6 +71,12 @@ const getUser = async (user_id) => {
     }
 }
 
+const getScope = async (user_id) => {
+    // gọi role module để lấy scope
+
+    return "scope1 scope2 scope3 scope4"
+}
+
 exports.AuthCodeGrant = async (req, res) => {
     const data = req.body
 
@@ -300,6 +306,7 @@ exports.TokenGrant = async (req, res) => {
     }
 
     // create access token jwt payload + cần thêm claims về scopes
+    const scope = await getScope(data.user_id)
     const access_token_claims = {
         iss: `https://${process.env.HOST}:${process.env.PORT}`,
         exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
@@ -308,6 +315,7 @@ exports.TokenGrant = async (req, res) => {
         ],
         sub: data.user_id,
         client_id: data.client_id,
+        scope: scope,
         iat: Math.floor(Date.now() / 1000),
         jti: 'jwtid'
     }

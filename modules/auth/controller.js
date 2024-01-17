@@ -1,34 +1,74 @@
-const service = require("./service");
+const clientService = require("./services/ClientService");
+const codeService = require("./services/CodeService")
+const tokenService = require("./services/TokenService")
 const helpers = require('../../helpers');
 const iden = require('../identity/controller')
 const randomstring = require("randomstring");
 const Crypto = require("crypto-js");
 const { json } = require("body-parser");
+const { generateKeyPairSync } = require("node:crypto")
+const { createPrivateKey } = require("crypto")
+const jwt = require('jsonwebtoken')
 
 const ClientValidation = async (client_id, client_secret) => {
     // authenticate client
+    // const hash = Crypto.SHA256(client_secret)
+    // const hashed_secret = hash.toString(Crypto.enc.Hex)
+
     const config = {
         id: client_id,
         client_secret: client_secret
     }
 
-    const client = await service.getClient(config)
+    const client = await clientService.getClient(config)
     
     return client
 }
 
 const UserValidation = async (username, password) => {
     // call to identity module and validate user
-    const config = {
-        username: username,
-        password: password,
-    }
-    const user = await iden.AuthenUser(config)
+    // const config = {
+    //     username: username,
+    //     password: password,
+    // }
+    // const user = await iden.AuthenUser(config)
     
-    if (!user)
-        return false
+    // if (!user)
+    //     return false
 
-    return user.id
+    // return user.id
+    return 1
+}
+
+const getUser = async (user_id) => {
+    return {
+        name: 'hoang anh',
+        given_name: '',
+        family_name: '',
+        middle_name: '',
+        nickname: '',
+        preferred_username: 'wanderer',
+        profile: '',
+        picture: '',
+        website: '',
+        email: 'abc@gmail.com',
+        email_verified: true,
+        gender: 'male',
+        birthdate: '',
+        zoneinfo: '',
+        locale: '',
+        phone_number: '0123456789',
+        phone_number_verified: true,
+        address: {
+            formatted: '',
+            street_address: '',
+            locality: '',
+            region: '',
+            postal_code: '',
+            country: '',
+        },
+        updated_at: 123,
+    }
 }
 
 exports.AuthCodeGrant = async (req, res) => {
@@ -70,6 +110,24 @@ exports.AuthCodeGrant = async (req, res) => {
         })
 
     // other condition
+    // validate redirect_uri
+    const client = await clientService.getClient({id: data.client_id})
+    if (!client) 
+        return res.status(400).json({
+            error: {
+                status: 400,
+                detail: 'unknown client'
+            }
+        })
+
+    const redirect_uri_arr = client.redirect_uri.split(',')
+    if (!redirect_uri_arr.includes(data.redirect_uri))
+        return res.status(400).json({
+            error: {
+                status: 400,
+                detail: 'invalid redirect uri'
+            }
+        })
 
     // generate code
     // co the nen de rieng khai bao cac truong cua code
@@ -82,7 +140,7 @@ exports.AuthCodeGrant = async (req, res) => {
     })
 
     // save code for checking
-    helpers.Redis.saveAuthCode(code, data.client_id, user_id, process.env.AUTH_CODE_EXP)
+    await codeService.saveAuthCode(code, data.client_id, user_id, process.env.AUTH_CODE_EXP)
 
     return res.status(200).json({
         code: code,
@@ -132,7 +190,7 @@ exports.TokenGrant = async (req, res) => {
             })
         }
 
-        const refresh_token = await helpers.Redis.getRefreshToken(data.client_id, data.user_id)
+        const refresh_token = await tokenService.getRefreshToken(data.client_id, data.user_id)
         
         if (refresh_token != data.refresh_token) {
             return res.status(400).json({
@@ -155,8 +213,6 @@ exports.TokenGrant = async (req, res) => {
                 }
             })
 
-        // check redirect_uri
-    
         // authenticate client
         const authorization = req.get('Authorization')
 
@@ -185,7 +241,7 @@ exports.TokenGrant = async (req, res) => {
         // get code for checking
         const dataFromCode = helpers.Generator.getDataFromCode(data.code) ? helpers.Generator.getDataFromCode(data.code) : undefined
 
-        const code = await helpers.Redis.getAuthCode(dataFromCode?.client_id, dataFromCode?.user_id)
+        const code = await codeService.getAuthCode(dataFromCode?.client_id, dataFromCode?.user_id)
     
         if (!code)
             return res.status(400).json({
@@ -203,7 +259,7 @@ exports.TokenGrant = async (req, res) => {
                 }
             })
         } else {
-            helpers.Redis.removeAuthCode(dataFromCode.client_id, dataFromCode.user_id)
+            await codeService.removeAuthCode(dataFromCode.client_id, dataFromCode.user_id)
         }
 
         if (data.redirect_uri != dataFromCode?.redirect_uri) {
@@ -217,7 +273,10 @@ exports.TokenGrant = async (req, res) => {
         
         // create id token jwt payload
         if (dataFromCode.scope != undefined && dataFromCode.scope.includes("openid")) {
-            // call to identity module
+            // call to identity module to get user
+            const user = await getUser(data.user_id)
+
+            // id token claims
             const id_token_claims = {
                 iss: `https://${process.env.HOST}:${process.env.PORT}`,
                 sub: data.user_id,
@@ -226,32 +285,7 @@ exports.TokenGrant = async (req, res) => {
                 ],
                 exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
                 iat: Math.floor(Date.now() / 1000),
-                name: 'hoang anh',
-                given_name: '',
-                family_name: '',
-                middle_name: '',
-                nickname: '',
-                preferred_username: 'wanderer',
-                profile: '',
-                picture: '',
-                website: '',
-                email: 'abc@gmail.com',
-                email_verified: true,
-                gender: 'male',
-                birthdate: '',
-                zoneinfo: '',
-                locale: '',
-                phone_number: '0123456789',
-                phone_number_verified: true,
-                address: {
-                    formatted: '',
-                    street_address: '',
-                    locality: '',
-                    region: '',
-                    postal_code: '',
-                    country: '',
-                },
-                updated_at: 123,
+                user
             }
     
             id_token = helpers.JWT.genToken(id_token_claims)
@@ -265,7 +299,7 @@ exports.TokenGrant = async (req, res) => {
         })
     }
 
-    // create access token jwt payload
+    // create access token jwt payload + cần thêm claims về scopes
     const access_token_claims = {
         iss: `https://${process.env.HOST}:${process.env.PORT}`,
         exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
@@ -277,12 +311,15 @@ exports.TokenGrant = async (req, res) => {
         iat: Math.floor(Date.now() / 1000),
         jti: 'jwtid'
     }
+    // public key và private key
+    const { publicKey, privateKey, } = helpers.Generator.generateKeyPair()
 
-    access_token = helpers.JWT.genToken(access_token_claims)
+    // access_token = helpers.JWT.genAccessToken(access_token_claims, privateKey)      // đang lỗi tương thích
+    access_token = helpers.JWT.genToken(access_token_claims)    // dùng tạm
     refresh_token = randomstring.generate(30)
 
-    helpers.Redis.saveAccessToken(access_token, process.env.TOKEN_EXP, data.client_id, data.user_id)
-    helpers.Redis.saveRefreshToken(refresh_token, data.client_id, data.user_id)
+    await tokenService.saveAccessToken(access_token, publicKey, process.env.TOKEN_EXP, data.client_id, data.user_id)
+    await tokenService.saveRefreshToken(refresh_token, data.client_id, data.user_id)
 
     return res.status(200).json({
         access_token: access_token,
@@ -298,7 +335,15 @@ exports.ClientRegistration = async (req, res) => {
 
     if (data.redirect_uri == null ||
         data.homepage_url == null ||
-        data.name == null)
+        data.name == null )
+        return res.status(400).json({
+            error: {
+                status: 400,
+                detail: "invalid request",
+            }
+        })
+    
+    if (!Array.isArray(data.redirect_uri) || (Array.isArray(data.redirect_uri) && data.redirect_uri.length == 0))
         return res.status(400).json({
             error: {
                 status: 400,
@@ -313,14 +358,14 @@ exports.ClientRegistration = async (req, res) => {
     const config = {
         id: client_id,
         client_secret: hash.toString(Crypto.enc.Hex),
-        redirect_uri: data.redirect_uri,
+        redirect_uri: data.redirect_uri.toString(),
         client_type: true,
         name: data.name,
         homepage_url: data.homepage_url,
         description: data.description != null ? data.description : null,
     }
 
-    await service.createClient(config)
+    await clientService.createClient(config)
 
     return res.status(200).json({
         client_id: client_id,
@@ -328,20 +373,80 @@ exports.ClientRegistration = async (req, res) => {
     })
 }
 
-exports.Test = async (req, res) => {
-    const client = await ClientValidation('123', '123d')
+exports.getPublicKey = async (req, res) => {
+    const data = req.body
 
-    if (!client)
+    if (data.client_id == null || 
+        data.user_id == null)
+        return res.status(405).json({
+            error: {
+                status: 405,
+                detail: 'missing parameter'
+            }
+        })
+
+    const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
+
+    if (!public_key)
         return res.status(400).json({
             error: {
                 status: 400,
-                detail: 'invalid client',
+                detail: "invalid request",
             }
         })
     
-    console.log("success! " + client)
+    return res.status(200).json({
+        public_key:public_key
+    })
+}
+
+exports.Logout = async (req, res) => {
+    const data = req.body
+
+    if (data.client_id == null || 
+        data.user_id == null)
+        return res.status(405).json({
+            error: {
+                status: 405,
+                detail: 'missing parameter'
+            }
+        })
+
+    await tokenService.destroyAccessToken(data.client_id, data.user_id)
 
     return res.status(200).json({
-        data: client
+        status:"logout successful"
+    })
+}
+
+exports.Test = async (req, res) => {
+    // const client = await ClientValidation('123', '123d')
+
+    // if (!client)
+    //     return res.status(400).json({
+    //         error: {
+    //             status: 400,
+    //             detail: 'invalid client',
+    //         }
+    //     })
+    
+    // console.log("success! " + client)
+
+    // return res.status(200).json({
+    //     data: client
+    // })
+
+    const { publicKey, privateKey, } = helpers.Generator.generateKeyPair()
+    // const token = jwt.sign({ foo: 'bar' }, privateKey, { algorithm: 'RS256' })
+    // const decoded = jwt.verify(token, publicKey)
+    const keyObj = createPrivateKey(privateKey)
+
+    // return res.status(200).json({
+    //     token: token,
+    //     decoded: decoded
+    // })
+
+    return res.status(200).json({
+        type: keyObj.type
     })
 }

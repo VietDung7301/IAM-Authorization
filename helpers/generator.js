@@ -1,6 +1,7 @@
 const base64 = require("base-64")
 const e = require("express")
 const utf8 = require("utf8")
+const { generateKeyPairSync } = require("node:crypto")
 
 function generateCode(data) {
   let encoded = base64.encode(utf8.encode(JSON.stringify(data)))
@@ -19,4 +20,22 @@ function getDataFromCode(code) {
   return data
 }
 
-module.exports = { generateCode, getDataFromCode }
+function generateKeyPair() {
+  const { publicKey, privateKey, } = generateKeyPairSync('rsa', {
+    modulusLength: 4096,
+    publicKeyEncoding: {
+      type: 'spki',
+      format: 'pem',
+    },
+    privateKeyEncoding: {
+      type: 'pkcs8',
+      format: 'pem',
+      cipher: 'aes-256-cbc',
+      passphrase: 'super duper secret',
+    },
+  })
+
+  return { publicKey, privateKey }
+}
+
+module.exports = { generateCode, getDataFromCode, generateKeyPair }

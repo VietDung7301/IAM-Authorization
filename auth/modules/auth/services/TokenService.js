@@ -3,7 +3,7 @@ const { client } = require("../../../helpers/redis")
 exports.saveAccessToken = async (access_token, publicKey, expires_in, client_id, user_id) => {
     const key = client_id + '@' + user_id + 'AccessToken'
     const content = {
-        token: access_token,
+        token: access_token,    //bỏ
         publicKey: publicKey,
         expires_in: expires_in,
     }
@@ -12,7 +12,7 @@ exports.saveAccessToken = async (access_token, publicKey, expires_in, client_id,
     await client.expire(key, parseInt(expires_in))
 }
 
-exports.getAccessToken = async (client_id, user_id) => {
+exports.getAccessToken = async (client_id, user_id) => {        // bỏ
     const key = client_id + '@' + user_id + 'AccessToken'
     const value = await client.get(key)
     const content = JSON.parse(value)

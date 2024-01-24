@@ -20,7 +20,6 @@ app.use(express.urlencoded({ extended: false, limit: '50mb', parameterLimit: 500
  * Import router dùng để bắt dữ liệu
  */
 router.use("", require('./modules/auth/route'));
-router.use("", require('./modules/identity/route'));
 
 
 app.use(router);

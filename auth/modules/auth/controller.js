@@ -2,7 +2,6 @@ const clientService = require("./services/ClientService");
 const codeService = require("./services/CodeService")
 const tokenService = require("./services/TokenService")
 const helpers = require('../../helpers');
-const iden = require('../identity/controller')
 const randomstring = require("randomstring");
 const Crypto = require("crypto-js");
 const { json } = require("body-parser");
@@ -444,10 +443,10 @@ exports.Test = async (req, res) => {
     //     data: client
     // })
 
-    const { publicKey, privateKey, } = helpers.Generator.generateKeyPair()
+    // const { publicKey, privateKey, } = helpers.Generator.generateKeyPair()
     // const token = jwt.sign({ foo: 'bar' }, privateKey, { algorithm: 'RS256' })
     // const decoded = jwt.verify(token, publicKey)
-    const keyObj = createPrivateKey(privateKey)
+    // const keyObj = createPrivateKey(privateKey)
 
     // return res.status(200).json({
     //     token: token,
@@ -455,6 +454,6 @@ exports.Test = async (req, res) => {
     // })
 
     return res.status(200).json({
-        type: keyObj.type
+        "message":"tách module auth thành công"
     })
 }

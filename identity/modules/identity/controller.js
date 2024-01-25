@@ -9,11 +9,31 @@ exports.getUser = async (req, res) => {
 
     if (!user)
         return res.status(400).json({
-            "msg": "false, no user"
+            code: 400,
+            message: "false"
         })
 
     return res.status(200).json({
-        "user":user
+        user:user
+    })
+}
+
+exports.authenticateUser = async (req, res) => {
+    const data = req.body
+    const config = {
+        username: data.username,
+        password: data.password,
+    }
+    const user = await UserService.getUser(config)
+
+    if (!user)
+        return res.status(401).json({
+            code: 401,
+            message: "invalid credentials" 
+        })
+
+    return res.status(200).json({
+        user: user
     })
 }
 

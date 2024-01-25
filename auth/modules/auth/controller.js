@@ -8,6 +8,8 @@ const { json } = require("body-parser");
 const { generateKeyPairSync } = require("node:crypto")
 const { createPrivateKey } = require("crypto")
 const jwt = require('jsonwebtoken')
+const axios = require('axios');
+const { response } = require("express");
 
 const ClientValidation = async (client_id, client_secret) => {
     // authenticate client
@@ -26,47 +28,29 @@ const ClientValidation = async (client_id, client_secret) => {
 
 const UserValidation = async (username, password) => {
     // call to identity module and validate user
-    // const config = {
-    //     username: username,
-    //     password: password,
-    // }
-    // const user = await iden.AuthenUser(config)
-    
-    // if (!user)
-    //     return false
-
-    // return user.id
-    return 1
+    try {
+        const {data} = await axios.post(`${process.env.IDEN_URL}/api/iden/user/authen`, {
+            username: username,
+            password: password,
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
+        return data.user.id
+    } catch (error) {
+        console.log(error)
+        return false
+    }
 }
 
 const getUser = async (user_id) => {
-    return {
-        name: 'hoang anh',
-        given_name: '',
-        family_name: '',
-        middle_name: '',
-        nickname: '',
-        preferred_username: 'wanderer',
-        profile: '',
-        picture: '',
-        website: '',
-        email: 'abc@gmail.com',
-        email_verified: true,
-        gender: 'male',
-        birthdate: '',
-        zoneinfo: '',
-        locale: '',
-        phone_number: '0123456789',
-        phone_number_verified: true,
-        address: {
-            formatted: '',
-            street_address: '',
-            locality: '',
-            region: '',
-            postal_code: '',
-            country: '',
-        },
-        updated_at: 123,
+    try {
+        const {data} = await axios.get(`${process.env.IDEN_URL}/api/iden/user/${user_id}`)
+        return data.user
+    } catch (error) {
+        console.log(error)
+        return false
     }
 }
 
@@ -281,19 +265,22 @@ exports.TokenGrant = async (req, res) => {
             // call to identity module to get user
             const user = await getUser(data.user_id)
 
-            // id token claims
-            const id_token_claims = {
-                iss: `https://${process.env.HOST}:${process.env.PORT}`,
-                sub: data.user_id,
-                aud: [
-                    data.client_id,
-                ],
-                exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
-                iat: Math.floor(Date.now() / 1000),
-                user
+            if (user) {
+                // id token claims
+                const id_token_claims = {
+                    iss: `https://${process.env.HOST}:${process.env.PORT}`,
+                    sub: data.user_id,
+                    aud: [
+                        data.client_id,
+                    ],
+                    exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
+                    iat: Math.floor(Date.now() / 1000),
+                    user
+                }
+        
+                id_token = helpers.JWT.genToken(id_token_claims)
             }
-    
-            id_token = helpers.JWT.genToken(id_token_claims)
+
         }
     } else {
         return res.status(400).json({
@@ -453,7 +440,14 @@ exports.Test = async (req, res) => {
     //     decoded: decoded
     // })
 
+    const data = await getUser("123")
+
+    if (!data)
+        return res.status(401).json({
+            "message":"false thanh cong"
+        })
+
     return res.status(200).json({
-        "message":"tách module auth thành công"
+        "message":data
     })
 }

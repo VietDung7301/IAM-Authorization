@@ -1,5 +1,14 @@
 const PermissionService = require("./services/PermissionService")
 
+exports.getScopesFromRoleId = async (req, res) => {
+    const roleId = req.params.roleId
+    const scopes = await PermissionService.getScopesFromRoleId(roleId)
+
+    return res.status(200).json({
+        scopes: scopes ? scopes : ''
+    })
+}
+
 exports.checkPermission = async (req, res) => {
     data = req.body
 

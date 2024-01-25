@@ -10,6 +10,7 @@ const controller = require('./controller');
 // });
 
 router.post('/api/permission/check', controller.checkPermission)
+router.get('/api/get-scopes-from-role/:roleId', controller.getScopesFromRoleId)
 router.get('/api/role/test', controller.test)
 
 module.exports = router;

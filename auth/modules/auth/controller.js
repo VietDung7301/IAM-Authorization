@@ -56,8 +56,17 @@ const getUser = async (user_id) => {
 
 const getScope = async (user_id) => {
     // gọi role module để lấy scope
-
-    return "scope1 scope2 scope3 scope4"
+    const user = await getUser(user_id)
+    if (!user)
+        return ""
+    
+    try {
+        const {data} = await axios.get(`${process.env.ROLE_URL}/api/get-scopes-from-role/${user.role_id}`)
+        return data.scopes
+    } catch (error) {
+        console.log(error)
+        return ""
+    }
 }
 
 exports.AuthCodeGrant = async (req, res) => {

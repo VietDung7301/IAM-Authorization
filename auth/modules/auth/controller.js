@@ -5,11 +5,13 @@ const helpers = require('../../helpers');
 const randomstring = require("randomstring");
 const Crypto = require("crypto-js");
 const { json } = require("body-parser");
-const { generateKeyPairSync } = require("node:crypto")
+const { generateKeyPairSync, KeyObject } = require("node:crypto")
 const { createPrivateKey } = require("crypto")
 const jwt = require('jsonwebtoken')
 const axios = require('axios');
 const { response } = require("express");
+const buffer = require('buffer');
+const crypto = require('crypto');
 
 const ClientValidation = async (client_id, client_secret) => {
     // authenticate client
@@ -54,15 +56,26 @@ const getUser = async (user_id) => {
     }
 }
 
-const getScope = async (user_id) => {
+const getScope = async (user_id, scopes) => {
     // gọi role module để lấy scope
     const user = await getUser(user_id)
     if (!user)
         return ""
     
+    if (!scopes)
+        return ""
+    
     try {
         const {data} = await axios.get(`${process.env.ROLE_URL}/api/get-scopes-from-role/${user.role_id}`)
-        return data.scopes
+        const req_scopes = scopes.split(' ')
+        let valid_scopes = ''
+
+        for (const req_scope of req_scopes) {
+            if (data.scopes.includes(req_scope))
+                valid_scopes = valid_scopes + req_scope + ' '
+        }
+
+        return valid_scopes.trim()
     } catch (error) {
         console.log(error)
         return ""
@@ -142,7 +155,6 @@ exports.AuthCodeGrant = async (req, res) => {
 
     return res.status(200).json({
         code: code,
-        user_id: user_id,
         state: data.state == null ? null : data.state,
     })
 }
@@ -151,11 +163,15 @@ exports.TokenGrant = async (req, res) => {
     let id_token = ''
     let access_token = ''
     let refresh_token = ''
+    let scope = ''
+    let user_id = ''
     const data = req.body
     
     if (data.grant_type != null && data.grant_type == 'refresh_token') {
         if (data.refresh_token == null ||
-            data.client_id == null)
+            data.client_id == null ||
+            data.user_id == null ||
+            data.scope == null)
             return res.status(400).json({
                 error: {
                     status: 400,
@@ -194,11 +210,30 @@ exports.TokenGrant = async (req, res) => {
             return res.status(400).json({
                 error: {
                     status: 400,
-                    detail: "invalid refresh token",
+                    detail: "invalid refresh token do token ko dong nhat",
                 }
             })
         }
 
+        // verify refresh token bang publicKey
+        const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
+        try {
+            jwt.verify(refresh_token, public_key, function(err, decoded) {
+                console.log(decoded.string)
+            });
+        } catch (error) {
+            console.log(error)
+            return res.status(400).json({
+                error: {
+                    status: 400,
+                    detail: "invalid refresh token do public key",
+                }
+            })
+        }
+
+        // generate scope
+        scope = await getScope(data.user_id, data.scope)
+        user_id = data.user_id
     } else if (data.grant_type != null && data.grant_type == 'authorization_code') {
 
         if (data.code == null ||
@@ -291,6 +326,10 @@ exports.TokenGrant = async (req, res) => {
             }
 
         }
+
+        // create scope
+        scope = await getScope(dataFromCode.user_id, dataFromCode.scope)
+        user_id = dataFromCode.user_id
     } else {
         return res.status(400).json({
             error: {
@@ -301,7 +340,6 @@ exports.TokenGrant = async (req, res) => {
     }
 
     // create access token jwt payload + cần thêm claims về scopes
-    const scope = await getScope(data.user_id)
     const access_token_claims = {
         iss: `https://${process.env.HOST}:${process.env.PORT}`,
         exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
@@ -315,14 +353,13 @@ exports.TokenGrant = async (req, res) => {
         jti: 'jwtid'
     }
     // public key và private key
-    const { publicKey, privateKey, } = helpers.Generator.generateKeyPair()
+    const { publicKey, privateKey } = helpers.Generator.generateKeyPair()
 
-    // access_token = helpers.JWT.genAccessToken(access_token_claims, privateKey)      // đang lỗi tương thích
-    access_token = helpers.JWT.genToken(access_token_claims)    // dùng tạm
-    refresh_token = randomstring.generate(30)
+    access_token = helpers.JWT.genAccessToken(access_token_claims, privateKey)
+    refresh_token = helpers.JWT.genAccessToken({string: randomstring.generate(30)}, privateKey)
 
-    await tokenService.savePublicKey(publicKey, process.env.TOKEN_EXP, data.client_id, data.user_id)
-    await tokenService.saveRefreshToken(refresh_token, data.client_id, data.user_id)
+    await tokenService.savePublicKey(publicKey, data.client_id, user_id)
+    await tokenService.saveRefreshToken(refresh_token, data.client_id, user_id)
 
     return res.status(200).json({
         access_token: access_token,
@@ -399,7 +436,7 @@ exports.getPublicKey = async (req, res) => {
         })
     
     return res.status(200).json({
-        public_key:public_key
+        public_key: public_key
     })
 }
 
@@ -439,24 +476,16 @@ exports.Test = async (req, res) => {
     //     data: client
     // })
 
-    // const { publicKey, privateKey, } = helpers.Generator.generateKeyPair()
-    // const token = jwt.sign({ foo: 'bar' }, privateKey, { algorithm: 'RS256' })
-    // const decoded = jwt.verify(token, publicKey)
-    // const keyObj = createPrivateKey(privateKey)
-
-    // return res.status(200).json({
-    //     token: token,
-    //     decoded: decoded
-    // })
-
-    const data = await getUser("123")
-
-    if (!data)
-        return res.status(401).json({
-            "message":"false thanh cong"
-        })
+    const { publicKey, privateKey } = helpers.Generator.generateKeyPair()
+    const token = jwt.sign({ foo: 'bar' }, privateKey, { algorithm: 'RS256' })
+    const decoded = jwt.verify(token, publicKey)
 
     return res.status(200).json({
-        "message":data
+        token: token,
+        decoded: decoded
     })
+
+    // return res.status(200).json({
+    //     test: "test"
+    // }) 
 }

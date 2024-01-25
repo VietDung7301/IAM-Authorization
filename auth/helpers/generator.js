@@ -21,8 +21,8 @@ function getDataFromCode(code) {
 }
 
 function generateKeyPair() {
-  const { publicKey, privateKey, } = generateKeyPairSync('rsa', {
-    modulusLength: 4096,
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+    modulusLength: 2048,
     publicKeyEncoding: {
       type: 'spki',
       format: 'pem',
@@ -30,8 +30,8 @@ function generateKeyPair() {
     privateKeyEncoding: {
       type: 'pkcs8',
       format: 'pem',
-      cipher: 'aes-256-cbc',
-      passphrase: 'super duper secret',
+      // cipher: 'aes-256-cbc',
+      // passphrase: 'super_duper_secret',
     },
   })
 

@@ -9,8 +9,8 @@ const controller = require('./controller');
 //   next();
 // });
 
-router.post('/api/permission/check', controller.checkPermission)
-router.get('/api/get-scopes-from-role/:roleId', controller.getScopesFromRoleId)
+router.post('/api/permission/check', controller.checkPermission)    // thêm cors
+router.get('/api/get-scopes-from-role/:roleId', controller.getScopesFromRoleId) // thêm cors
 router.get('/api/role/test', controller.test)
 
 module.exports = router;

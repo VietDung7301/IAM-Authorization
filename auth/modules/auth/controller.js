@@ -155,6 +155,7 @@ exports.AuthCodeGrant = async (req, res) => {
 
     return res.status(200).json({
         code: code,
+        user_id: user_id,
         state: data.state == null ? null : data.state,
     })
 }
@@ -414,7 +415,7 @@ exports.ClientRegistration = async (req, res) => {
 }
 
 exports.getPublicKey = async (req, res) => {
-    const data = req.body
+    const data = req.query
 
     if (data.client_id == null || 
         data.user_id == null)
@@ -460,32 +461,9 @@ exports.Logout = async (req, res) => {
 }
 
 exports.Test = async (req, res) => {
-    // const client = await ClientValidation('123', '123d')
-
-    // if (!client)
-    //     return res.status(400).json({
-    //         error: {
-    //             status: 400,
-    //             detail: 'invalid client',
-    //         }
-    //     })
-    
-    // console.log("success! " + client)
-
-    // return res.status(200).json({
-    //     data: client
-    // })
-
-    const { publicKey, privateKey } = helpers.Generator.generateKeyPair()
-    const token = jwt.sign({ foo: 'bar' }, privateKey, { algorithm: 'RS256' })
-    const decoded = jwt.verify(token, publicKey)
-
+    const data = req.query
+    console.log(data)
     return res.status(200).json({
-        token: token,
-        decoded: decoded
+        msg: "msg"
     })
-
-    // return res.status(200).json({
-    //     test: "test"
-    // }) 
 }

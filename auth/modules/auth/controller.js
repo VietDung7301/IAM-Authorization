@@ -312,7 +312,7 @@ exports.TokenGrant = async (req, res) => {
     access_token = helpers.JWT.genToken(access_token_claims)    // dùng tạm
     refresh_token = randomstring.generate(30)
 
-    await tokenService.saveAccessToken(access_token, publicKey, process.env.TOKEN_EXP, data.client_id, data.user_id)
+    await tokenService.savePublicKey(publicKey, process.env.TOKEN_EXP, data.client_id, data.user_id)
     await tokenService.saveRefreshToken(refresh_token, data.client_id, data.user_id)
 
     return res.status(200).json({

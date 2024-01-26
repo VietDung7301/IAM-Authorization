@@ -1,9 +1,9 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken')
-import { jwtDecode } from "jwt-decode";
+const jwt_decode = require('jwt-decode')
 
 const verifyAccessToken = async (access_token) => {
-    const decoded = jwtDecode(access_token);
+    const decoded = jwt_decode.jwtDecode(access_token)
 
     try {
         const {data} = await axios.get(`${process.env.AUTH_URL}/api/access_resource?user_id=${decoded.sub}&client_id=${decoded.client_id}`)
@@ -105,9 +105,11 @@ exports.accessResource = async (req, res) => {
 }
 
 exports.test = async (req, res) => {
-    data = req.body
+    const data = req.body
+    const decoded = jwt_decode.jwtDecode(data.token)
 
     return res.status(200).json({
-        token: jwtDecode(data.token)
+        user: decoded.sub,
+        client: decoded.client_id
     })
 }

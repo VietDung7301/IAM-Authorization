@@ -51,7 +51,7 @@ exports.accessResource = async (req, res) => {
     if (authorization != null) {
         let arr = authorization.split(" ")
         const access_token = arr[1];
-        token_content = await verifyAccessToken(access_token, data.user_id, data.client_id)
+        token_content = await verifyAccessToken(access_token)
         if (!token_content)
             return res.status(400).json({
                 error: {

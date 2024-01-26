@@ -3,7 +3,7 @@ const app = express();
 const server = require("http").createServer(app);
 const router = express.Router();
 const bodyParser = require('body-parser');
-// const cors = require('cors');
+const cors = require('cors');
 /**
  * 
  * Import các biến toàn cục
@@ -11,7 +11,7 @@ const bodyParser = require('body-parser');
 require("dotenv").config();
 require("./global")(server);
 
-// app.use(cors());
+app.use(cors());
 app.use(bodyParser.json());
 app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({ extended: false, limit: '50mb', parameterLimit: 50000 }));

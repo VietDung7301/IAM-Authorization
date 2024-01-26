@@ -3,13 +3,15 @@ const app = express();
 const server = require("http").createServer(app);
 const router = express.Router();
 const bodyParser = require('body-parser');
-// const cors = require('cors');
+const cors = require('cors');
 /**
  * 
  * Import các biến toàn cục
  */
 require("dotenv").config();
 // require("./global")(server);
+
+app.use(cors())
 
 // app.use(cors({
 //     origin: 'http://localhost:8123',

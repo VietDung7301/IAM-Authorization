@@ -347,7 +347,7 @@ exports.TokenGrant = async (req, res) => {
         aud: [
             data.client_id,
         ],
-        sub: data.user_id,
+        sub: user_id,
         client_id: data.client_id,
         scope: scope,
         iat: Math.floor(Date.now() / 1000),

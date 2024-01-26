@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
  * Import các biến toàn cục
  */
 require("dotenv").config();
-require("./global")(server);
+// require("./global")(server);
 
 // app.use(cors({
 //     origin: 'http://localhost:8123',
@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: false, limit: '50mb', parameterLimit: 500
 /**
  * Import router dùng để bắt dữ liệu
  */
-router.use("", require('./modules/role/route'));
+router.use("", require('./modules/access/route'));
 
 app.use(router);
 

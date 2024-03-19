@@ -6,7 +6,10 @@ const verifyAccessToken = async (access_token) => {
     const decoded = jwt_decode.jwtDecode(access_token)
 
     try {
-        const {data} = await axios.get(`${process.env.AUTH_URL}/api/access_resource?user_id=${decoded.sub}&client_id=${decoded.client_id}`)
+        const {data} = await axios.get(`${process.env.AUTH_URL}/api/auth/public_key?user_id=${decoded.sub}&client_id=${decoded.client_id}`)
+
+        console.log('public_key', data.public_key)
+
         return jwt.verify(access_token, data.public_key)
     } catch (error) {
         console.log(error)
@@ -51,6 +54,9 @@ exports.accessResource = async (req, res) => {
     if (authorization != null) {
         let arr = authorization.split(" ")
         const access_token = arr[1];
+
+        console.log('access_token: ', access_token)
+
         token_content = await verifyAccessToken(access_token)
         if (!token_content)
             return res.status(400).json({

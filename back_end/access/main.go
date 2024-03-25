@@ -112,7 +112,7 @@ func accessResource(w http.ResponseWriter, r *http.Request) {
 
 	if response.StatusCode != 200 {
 		fmt.Printf("status code != 200\n")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "error: %d\n", response.StatusCode)
 		return
 	}
 	defer response.Body.Close()
@@ -180,7 +180,7 @@ func verifyAccessToken(tokenString string) jwt.MapClaims {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			// Don't forget to validate the alg is what you expect:
 			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 
 			return key, nil

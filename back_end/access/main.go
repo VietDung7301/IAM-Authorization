@@ -1,12 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"access/helpers/jsonparse"
+	"access/helpers/responses"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
@@ -19,18 +21,6 @@ func main() {
 	* locale mangagement
 	 */
 
-	/*
-	* verifyToken()
-	* verifyScopes()
-	* forwardReq()
-	 */
-
-	/*
-	* chuẩn bị đoạn code để đọc response
-	* tạo response trait
-	* refractor code
-	 */
-
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST")
@@ -38,37 +28,23 @@ func main() {
 	http.ListenAndServe(":8004", r)
 }
 
-type ResponseBody struct {
+type RequestBody struct {
 	Method       string
 	Url          string
 	Content_type string
 }
 
-type ResponsePubKey struct {
-	Public_key string
-}
-
-type ResponseCheck struct {
-	Check bool
-}
-
-type ResponseResource struct {
-	Code                     int
-	Resource_server_response []byte
-}
-
 func accessResource(w http.ResponseWriter, r *http.Request) {
 	var claims jwt.MapClaims
 	authorization := r.Header.Get("Authorization")
-	data := ResponseBody{
+	data := RequestBody{
 		Method:       r.FormValue("method"),
 		Url:          r.FormValue("url"),
 		Content_type: r.FormValue("content_type"),
 	}
 
 	if data.Method == "" || data.Url == "" || data.Content_type == "" {
-		http.Error(w, "invalid request", 400)
-		return
+		responses.ResponseInvalidRequest(w, "invalid request")
 	}
 
 	// verify access token
@@ -79,18 +55,15 @@ func accessResource(w http.ResponseWriter, r *http.Request) {
 		claims = verifyAccessToken(token)
 
 		if claims == nil {
-			http.Error(w, "unauthorized request - claims nil", http.StatusUnauthorized)
-			return
+			responses.ResponseUnauthenticate(w)
 		}
 	} else {
-		http.Error(w, "invalid request", 400)
-		return
+		responses.ResponseInvalidRequest(w, "invalid request")
 	}
 
 	// verify scopes
 	if !verifyScopes(data.Url, data.Method, claims["scope"]) {
-		http.Error(w, "invalid scope", 400)
-		return
+		responses.ResponseInvalidRequest(w, "invalid scopes")
 	}
 
 	// response
@@ -112,8 +85,7 @@ func accessResource(w http.ResponseWriter, r *http.Request) {
 
 	if response.StatusCode != 200 {
 		fmt.Printf("status code != 200\n")
-		http.Error(w, "error: %d\n", response.StatusCode)
-		return
+		responses.Response(w, response.StatusCode, response.Status, nil)
 	}
 	defer response.Body.Close()
 
@@ -124,19 +96,10 @@ func accessResource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseResource := ResponseResource{
-		Code:                     response.StatusCode,
-		Resource_server_response: resData,
-	}
-
-	jsonResponse, err := json.Marshal(responseResource)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	returnResource := jsonparse.JsonSimpleParse(resData)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
+	responses.ResponseSuccess(w, returnResource)
 }
 
 func verifyAccessToken(tokenString string) jwt.MapClaims {
@@ -167,11 +130,10 @@ func verifyAccessToken(tokenString string) jwt.MapClaims {
 			return nil
 		}
 
-		var responseObject ResponsePubKey
-		json.Unmarshal(responseData, &responseObject)
+		parsedResponseData := jsonparse.JsonSimpleParse(responseData)
 
 		// dùng public key để verify token
-		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(responseObject.Public_key))
+		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(parsedResponseData["public_key"].(string)))
 		if err != nil {
 			fmt.Printf("ko parse dc public key")
 			return nil
@@ -229,12 +191,7 @@ func verifyScopes(url_string string, method string, scopes interface{}) bool {
 		return false
 	}
 
-	var responseCheck ResponseCheck
-	err = json.Unmarshal(data, &responseCheck)
-	if err != nil {
-		fmt.Printf("ko parse duoc response\n")
-		return false
-	}
+	responseCheck := jsonparse.JsonSimpleParse(data)
 
-	return responseCheck.Check
+	return responseCheck["check"].(bool)
 }

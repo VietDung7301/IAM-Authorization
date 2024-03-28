@@ -8,11 +8,11 @@ import (
 type ResponseBody struct {
 	Code    int
 	Message string
-	Data    []byte
+	Data    interface{}
 }
 
-func ResponseSuccess(w http.ResponseWriter, data []byte) {
-	Response(w, http.StatusOK, "", data)
+func ResponseSuccess(w http.ResponseWriter, data interface{}) {
+	Response(w, http.StatusOK, "Success!", data)
 }
 
 func ResponseInvalidRequest(w http.ResponseWriter, msg string) {
@@ -25,7 +25,7 @@ func ResponseUnauthenticate(w http.ResponseWriter) {
 
 // other response types go here
 
-func Response(w http.ResponseWriter, statusCode int, msg string, data []byte) {
+func Response(w http.ResponseWriter, statusCode int, msg string, data interface{}) {
 	/*
 	* data nên được convert sang json trước sử dụng json.Marshal()
 	 */

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,11 +9,15 @@ import (
 	"strings"
 
 	"access/helpers/jsonparse"
+	"access/helpers/redisconn"
 	"access/helpers/responses"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
+	"github.com/redis/go-redis/v9"
 )
+
+var redisClient *redis.Client
 
 func main() {
 	/*
@@ -20,6 +25,9 @@ func main() {
 	* Finger print
 	* locale mangagement
 	 */
+
+	ctx := context.TODO()
+	redisClient = redisconn.ConnectRedis(ctx)
 
 	r := mux.NewRouter()
 
@@ -112,28 +120,40 @@ func verifyAccessToken(tokenString string) jwt.MapClaims {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		// get public key
-		apiUrl := fmt.Sprintf("http://localhost:8000/api/auth/public_key?user_id=%s&client_id=%s", claims["sub"], claims["client_id"])
-		response, err := http.Get(apiUrl)
+		// apiUrl := fmt.Sprintf("http://localhost:8000/api/auth/public_key?user_id=%s&client_id=%s", claims["sub"], claims["client_id"])
+		// response, err := http.Get(apiUrl)
+		// if err != nil {
+		// 	fmt.Printf("ko lay duoc public key: %s\n", err.Error())
+		// 	return nil
+		// }
+
+		// if response.StatusCode != 200 {
+		// 	fmt.Printf("status code != 200\n")
+		// 	return nil
+		// }
+
+		// responseData, err := io.ReadAll(response.Body)
+		// if err != nil {
+		// 	fmt.Printf("ko read duoc response body\n")
+		// 	return nil
+		// }
+
+		// parsedResponseData := jsonparse.JsonSimpleParse(responseData)
+
+		redisKey := fmt.Sprintf("%s@%sAccessToken", claims["client_id"], claims["sub"])
+		ctx := context.Background()
+		val, err := redisClient.Get(ctx, redisKey).Result()
 		if err != nil {
 			fmt.Printf("ko lay duoc public key: %s\n", err.Error())
 			return nil
 		}
+		fmt.Printf("Pubkey obj: %s\n", val)
 
-		if response.StatusCode != 200 {
-			fmt.Printf("status code != 200\n")
-			return nil
-		}
-
-		responseData, err := io.ReadAll(response.Body)
-		if err != nil {
-			fmt.Printf("ko read duoc response body\n")
-			return nil
-		}
-
-		parsedResponseData := jsonparse.JsonSimpleParse(responseData)
+		publicKey := jsonparse.JsonSimpleParse([]byte(val))
 
 		// dùng public key để verify token
-		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(parsedResponseData["public_key"].(string)))
+		// key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(parsedResponseData["public_key"].(string)))
+		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(publicKey["publicKey"].(string)))
 		if err != nil {
 			fmt.Printf("ko parse dc public key")
 			return nil

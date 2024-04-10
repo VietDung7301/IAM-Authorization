@@ -15,7 +15,7 @@ func ResponseSuccess(w http.ResponseWriter, data interface{}) {
 	Response(w, http.StatusOK, "Success!", data)
 }
 
-func ResponseInvalidRequest(w http.ResponseWriter, msg string) {
+func ResponseInvalidRequest(w http.ResponseWriter) {
 	Response(w, http.StatusBadRequest, "invalid request", nil)
 }
 
@@ -42,6 +42,6 @@ func Response(w http.ResponseWriter, statusCode int, msg string, data interface{
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	w.Header().Add("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }

@@ -1,0 +1,46 @@
+version: "3.8"
+services:
+  iam_db:
+      image: mysql
+      container_name: iam_db
+      restart: unless-stopped
+      environment:
+          MYSQL_DATABASE: iam
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_PASSWORD: root
+          MYSQL_USER: user
+      volumes:
+          - ./dockers/mysql:/var/lib/mysql
+          - ./dockers/mysql:/etc/mysql/conf.d
+      ports:
+          - "3306:3306"
+      # networks:
+      #     - iam_net
+    
+  iam_redis:
+      image: redis/redis-stack:latest
+      container_name: iam_redis
+      restart: unless-stopped
+      volumes:
+        - ./dockers/redis:/data
+      ports: 
+         - "6379:6379"
+
+  # iam_nginx:
+  #   image: nginx:alpine
+  #   container_name: iam_nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "4953:80"
+  #   links:
+  #     # - iam_backend
+  #     - iam_db
+  #   volumes:
+  #     - ./:/var/www
+  #     - ./dockers/nginx:/etc/nginx/conf.d/
+  #   networks:
+  #     - iam_net
+
+networks:
+  iam_net:
+    driver: bridge

@@ -4,7 +4,7 @@ const modelConfig = {
     name: 'User',
     attributes: {
         id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.STRING,
             primaryKey: true,
         },
         role_id: {
@@ -88,13 +88,7 @@ const modelConfig = {
             allowNull: true,
         }
     },
-    associations: [
-        {
-            relation: 'hasOne',
-            target: 'OTP',
-            options: {},
-        },
-    ],
+    associations: [],
 }
 
 module.exports = { modelConfig }

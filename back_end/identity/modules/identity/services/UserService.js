@@ -1,5 +1,5 @@
 exports.getAll = async () => {
-
+    return await DB_CONNECTION.models.User.findAll()
 }
 
 exports.getUser = async (id) => {

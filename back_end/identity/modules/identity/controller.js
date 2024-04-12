@@ -2,7 +2,9 @@ const UserService = require("./services/UserService");
 const randomStr = require("randomstring")
 
 exports.getAll = async (req, res) => {
-
+    return res.status(200).json({
+        users: await UserService.getAll()
+    })
 }
 
 exports.getUser = async (req, res) => {

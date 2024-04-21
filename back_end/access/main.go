@@ -19,6 +19,12 @@ import (
 
 var redisClient *redis.Client
 
+type RequestBody struct {
+	Method       string
+	Url          string
+	Content_type string
+}
+
 func main() {
 	/*
 	* rate limit based on IP
@@ -53,12 +59,6 @@ func main() {
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
 
 	http.ListenAndServe(":8004", r)
-}
-
-type RequestBody struct {
-	Method       string
-	Url          string
-	Content_type string
 }
 
 func accessResource(w http.ResponseWriter, r *http.Request) {

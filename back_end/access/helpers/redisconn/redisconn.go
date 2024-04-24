@@ -10,9 +10,9 @@ import (
 func ConnectRedis(ctx context.Context) *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
-		Password: "redispw",
+		Password: "",
 		DB:       0,
-		Username: "default",
+		Username: "",
 	})
 
 	pong, err := client.Ping(ctx).Result()

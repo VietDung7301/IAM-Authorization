@@ -17,6 +17,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/cors"
 )
 
 var redisClient *redis.Client
@@ -35,7 +36,14 @@ func main() {
 
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST")
 
-	http.ListenAndServe(":8004", r)
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3001"},
+		AllowCredentials: true,
+	})
+
+	handler := c.Handler(r)
+
+	http.ListenAndServe(":8004", handler)
 }
 
 type RequestBody struct {
@@ -87,10 +95,10 @@ func accessResource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// verify scopes
-	if !verifyScopes(data.Url, data.Method, claims["scope"]) {
-		responses.ResponseInvalidRequest(w)
-		return
-	}
+	// if !verifyScopes(data.Url, data.Method, claims["scope"]) {
+	// 	responses.ResponseInvalidRequest(w)
+	// 	return
+	// }
 
 	// response
 	client := &http.Client{}
@@ -137,7 +145,13 @@ func verifyAccessToken(tokenString string) jwt.MapClaims {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		// get public key
-		redisKey := fmt.Sprintf("%s@%sAccessToken", claims["client_id"], claims["sub"])
+
+		fmt.Printf("%f\n", claims["sub"])
+
+		redisKey := fmt.Sprintf("%s@%dAccessToken", claims["client_id"], int(claims["sub"].(float64)))
+
+		fmt.Printf("redisKey: %s\n", redisKey)
+
 		ctx := context.Background()
 		val, err := redisClient.Get(ctx, redisKey).Result()
 		if err != nil {

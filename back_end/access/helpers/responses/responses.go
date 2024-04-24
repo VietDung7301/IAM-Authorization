@@ -23,6 +23,10 @@ func ResponseUnauthenticate(w http.ResponseWriter) {
 	Response(w, http.StatusUnauthorized, "Unauthorized", nil)
 }
 
+func ResponseGeneralError(w http.ResponseWriter, msg string) {
+	Response(w, http.StatusInternalServerError, msg, nil)
+}
+
 // other response types go here
 
 func Response(w http.ResponseWriter, statusCode int, msg string, data interface{}) {
@@ -42,6 +46,5 @@ func Response(w http.ResponseWriter, statusCode int, msg string, data interface{
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }

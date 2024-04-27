@@ -63,7 +63,7 @@ exports.AuthCodeGrant = async (req, res) => {
             client_id: data.client_id,
             scope: data?.scope,
             redirect_uri: data.redirect_uri,
-            // created_at: Math.floor(Date.now() / 1000),
+            created_at: Math.floor(Date.now() / 1000),
         })
 
         // save code for checking

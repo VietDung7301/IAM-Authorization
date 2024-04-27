@@ -13,39 +13,6 @@ const { response } = require("express");
 const buffer = require('buffer');
 const crypto = require('crypto');
 
-const ClientValidation = async (client_id, client_secret) => {
-    // authenticate client
-    // const hash = Crypto.SHA256(client_secret)
-    // const hashed_secret = hash.toString(Crypto.enc.Hex)
-
-    const config = {
-        id: client_id,
-        client_secret: client_secret
-    }
-
-    const client = await clientService.getClient(config)
-    
-    return client
-}
-
-const UserValidation = async (username, password) => {
-    // call to identity module and validate user
-    try {
-        const {data} = await axios.post(`${process.env.IDEN_URL}/api/iden/user/authen`, {
-            username: username,
-            password: password,
-        }, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
-        return data.user.id
-    } catch (error) {
-        console.log(error)
-        return false
-    }
-}
-
 const getUser = async (user_id) => {
     try {
         const {data} = await axios.get(`${process.env.IDEN_URL}/api/iden/user/${user_id}`)
@@ -86,81 +53,34 @@ const getScope = async (user_id, scopes) => {
 }
 
 exports.AuthCodeGrant = async (req, res) => {
-    const data = req.body
-
-    if (data.response_type == null || 
-        data.client_id == null ||
-        data.redirect_uri == null)
-        return res.status(405).json({
-            error: {
-                status: 405,
-                detail: 'missing parameter'
-            }
+    try {
+        const data = req.body
+        console.log(data)
+        // generate code
+        // co the nen de rieng khai bao cac truong cua code
+        const code = helpers.Generator.generateCode({
+            user_id: data.user_id,
+            client_id: data.client_id,
+            scope: data?.scope,
+            redirect_uri: data.redirect_uri,
+            // created_at: Math.floor(Date.now() / 1000),
         })
 
-    if (data.response_type != 'code')
-        return res.status(405).json({
-            error: {
-                status: 405,
-                detail: 'unsupported response type'
-            }
+        // save code for checking
+        await codeService.saveAuthCode(code, data.client_id, data.user_id, process.env.AUTH_CODE_EXP)
+
+        return res.status(200).json({
+            code: code,
+            user_id: data.user_id,
+            state: data.state == null ? null : data.state,
         })
 
-    if (data.username == null || data.password == null)
-        return res.status(401).json({
-            error: {
-                status: 401,
-                detail: 'unauthorized user'
-            }
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({
+            msg: 'server err'
         })
-
-    const user_id = await UserValidation(data.username, data.password)
-    if (!user_id)
-        return res.status(401).json({
-            error: {
-                status: 401,
-                detail: 'unauthorized user'
-            }
-        })
-
-    // other condition
-    // validate redirect_uri
-    const client = await clientService.getClient({id: data.client_id})
-    if (!client) 
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'unknown client'
-            }
-        })
-
-    const redirect_uri_arr = client.redirect_uri.split(',')
-    if (!redirect_uri_arr.includes(data.redirect_uri))
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'invalid redirect uri'
-            }
-        })
-
-    // generate code
-    // co the nen de rieng khai bao cac truong cua code
-    const code = helpers.Generator.generateCode({
-        user_id: user_id,
-        client_id: data.client_id,
-        scope: data?.scope,
-        redirect_uri: data.redirect_uri,
-        created_at: Math.floor(Date.now() / 1000),
-    })
-
-    // save code for checking
-    await codeService.saveAuthCode(code, data.client_id, user_id, process.env.AUTH_CODE_EXP)
-
-    return res.status(200).json({
-        code: code,
-        user_id: user_id,
-        state: data.state == null ? null : data.state,
-    })
+    }
 }
 
 exports.TokenGrant = async (req, res) => {
@@ -182,31 +102,6 @@ exports.TokenGrant = async (req, res) => {
                     detail: 'invalid request',
                 }
             })
-        
-        // authenticate client
-        const authorization = req.get('Authorization')
-
-        if (authorization != null) {
-            let arr = authorization.split(" ")
-            const secret = arr[1];
-            const client = await ClientValidation(data.client_id, secret)
-
-            if (!client) {
-                return res.status(400).json({
-                    error: {
-                        status: 400,
-                        detail: 'invalid client',
-                    }
-                })
-            }
-        } else {
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: 'invalid client',
-                }
-            })
-        }
 
         const refresh_token = await tokenService.getRefreshToken(data.client_id, data.user_id)
         
@@ -249,31 +144,6 @@ exports.TokenGrant = async (req, res) => {
                     detail: 'invalid request',
                 }
             })
-
-        // authenticate client
-        const authorization = req.get('Authorization')
-
-        if (authorization != null) {
-            let arr = authorization.split(" ")
-            const secret = arr[1];
-            const client = await ClientValidation(data.client_id, secret)
-    
-            if (!client) {
-                return res.status(400).json({
-                    error: {
-                        status: 400,
-                        detail: 'invalid client',
-                    }
-                })
-            }
-        } else {
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: 'invalid client',
-                }
-            })
-        }
     
         // get code for checking
         const dataFromCode = helpers.Generator.getDataFromCode(data.code) ? helpers.Generator.getDataFromCode(data.code) : undefined
@@ -446,40 +316,6 @@ exports.getPublicKey = async (req, res) => {
 
 exports.Logout = async (req, res) => {
     const data = req.body
-    const authorization = req.get('Authorization')
-
-    if (data.client_id == null || 
-        data.user_id == null)
-        return res.status(405).json({
-            error: {
-                status: 405,
-                detail: 'missing parameter'
-            }
-        })
-    
-    if (authorization != null) {
-        let arr = authorization.split(" ")
-        const access_token = arr[1];
-        try {
-            const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
-            jwt.verify(access_token, public_key)
-        } catch (error) {
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: 'unauthorized request',
-                }
-            })
-        }
-    } else {
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'invalid request',
-            }
-        })
-    }
-
     await tokenService.destroyAccessToken(data.client_id, data.user_id)
 
     return res.status(200).json({

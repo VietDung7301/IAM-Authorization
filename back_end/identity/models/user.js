@@ -88,7 +88,15 @@ const modelConfig = {
             allowNull: true,
         }
     },
-    associations: [],
+    associations: [
+        {
+            relation: 'hasOne',
+            target: 'Fingerprint',
+            options: {
+                foreignKey: 'user_id',
+            },
+        },
+    ],
 }
 
 module.exports = { modelConfig }

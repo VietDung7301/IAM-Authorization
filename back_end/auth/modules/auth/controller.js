@@ -14,6 +14,16 @@ const buffer = require('buffer');
 const crypto = require('crypto');
 const responseTrait = require('../../traits/responseTrait')
 
+const getFingerprints = async (user_id) => {
+    try {
+        const data = await axios.get(`${process.env.IDEN_URL}/api/iden/user/${user_id}/fingerprints`)
+        return data.fingerprints
+    } catch (error) {
+        console.log(error)
+        return null
+    }
+}
+
 const getUser = async (user_id) => {
     try {
         const {data} = await axios.get(`${process.env.IDEN_URL}/api/iden/user/${user_id}`)

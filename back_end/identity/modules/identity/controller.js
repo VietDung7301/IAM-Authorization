@@ -76,6 +76,16 @@ exports.authenticateUser = async (req, res) => {
     })
 }
 
+exports.getFingerprint = async (req, res) => {
+    const id = req.params.id
+
+    const result = await UserService.getFingerprints(id)
+
+    return res.status(200).json({
+        fingerprints: result
+    })
+}
+
 exports.test = async (req, res) => {
     console.log(DB_CONNECTION.models)
 

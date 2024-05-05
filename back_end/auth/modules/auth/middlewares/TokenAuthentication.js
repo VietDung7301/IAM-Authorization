@@ -1,5 +1,6 @@
 const tokenService = require("../services/TokenService")
 const jwt = require('jsonwebtoken')
+const responseTrait = require('../../../traits/responseTrait')
 
 exports.Handle = async (req, res, next) => {
     const data = req.body
@@ -7,12 +8,7 @@ exports.Handle = async (req, res, next) => {
 
     if (data.client_id == null || 
         data.user_id == null)
-        return res.status(405).json({
-            error: {
-                status: 405,
-                detail: 'missing parameter'
-            }
-        })
+        return responseTrait.ResponseUnauthenticate(res)
     
     if (authorization != null) {
         let arr = authorization.split(" ")
@@ -21,20 +17,10 @@ exports.Handle = async (req, res, next) => {
             const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
             jwt.verify(access_token, public_key)
         } catch (error) {
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: 'unauthorized request',
-                }
-            })
+            return responseTrait.ResponseUnauthenticate(res)
         }
     } else {
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'missing access token',
-            }
-        })
+        return responseTrait.ResponseUnauthenticate(res)
     }
 
     next()

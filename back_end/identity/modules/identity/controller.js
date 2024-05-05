@@ -1,8 +1,9 @@
 const UserService = require("./services/UserService");
 const randomStr = require("randomstring")
+const responseTrait = require('../../traits/responseTrait')
 
 exports.getAll = async (req, res) => {
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         users: await UserService.getAll()
     })
 }
@@ -12,12 +13,9 @@ exports.getUser = async (req, res) => {
     const user = await UserService.getUser(id)
 
     if (!user)
-        return res.status(400).json({
-            code: 400,
-            message: "user not exist!"
-        })
+        return responseTrait.ResponseNotFound(res)
 
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         user:user
     })
 }
@@ -29,12 +27,9 @@ exports.createUser = async (req, res) => {
     data.id = randomStr.generate(10)
     const user = await UserService.createUser(data)
     if (!user)
-        return res.status(400).json({
-            code: 400,
-            message: "false"
-        })
+        return responseTrait.ResponseInternalServer(res)
     
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         user:user
     })
 }
@@ -46,12 +41,9 @@ exports.updateUser = async (req, res) => {
 
     const result = await UserService.updateUser(id, data)
     if (!result)
-        return res.status(400).json({
-            code: 400,
-            message: "false"
-        })
+        return responseTrait.ResponseInternalServer(res)
     
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         result:result
     })
 }
@@ -61,12 +53,9 @@ exports.deleteUser = async (req, res) => {
 
     const result = await UserService.deleteUser(id)
     if (!result)
-        return res.status(400).json({
-            code: 400,
-            message: "false"
-        })
+        return responseTrait.ResponseInternalServer(res)
 
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         deleted_user:result
     })
 }
@@ -80,13 +69,10 @@ exports.authenticateUser = async (req, res) => {
     const user = await UserService.getUser(config)
 
     if (!user)
-        return res.status(401).json({
-            code: 401,
-            message: "invalid credentials" 
-        })
+        return responseTrait.ResponseNotFound(res)
 
-    return res.status(200).json({
-        user: user
+    return responseTrait.ResponseSuccess(res, {
+        user:user
     })
 }
 

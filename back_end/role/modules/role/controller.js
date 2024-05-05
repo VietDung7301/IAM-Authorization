@@ -1,23 +1,22 @@
 const PermissionService = require("./services/PermissionService")
+const responseTrait = require('../../traits/responseTrait')
 
 exports.getScopesFromRoleId = async (req, res) => {
     const roleId = req.params.roleId
     const scopes = await PermissionService.getScopesFromRoleId(roleId)
 
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         scopes: scopes ? scopes : ''
     })
 }
 
 exports.checkPermission = async (req, res) => {
-    data = req.body
+    // data = req.body
 
     if (data.url == null ||
         data.method == null ||
         data.scopes == null) {
-            return res.status(400).json({
-                detail: "invalid parameters"
-            })
+            return responseTrait.ResponseInvalid(res)
     }
 
     const scopes = data.scopes.split(' ')
@@ -27,7 +26,7 @@ exports.checkPermission = async (req, res) => {
         scopes: scopes
     }
 
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         check: await PermissionService.checkPermission(config)
     })
 }

@@ -14,7 +14,7 @@ const corsOptions = {
 
 router.post('/api/auth/code', [codeReqValidation.Handle, userValidation.Handle, clientValidation.Handle], controller.AuthCodeGrant)
 router.post('/api/auth/token', [clientAuthentication.Handle], controller.TokenGrant)
-router.post('/api/auth/client', controller.ClientRegistration)
+// router.post('/api/auth/client', controller.ClientRegistration)
 router.post('/api/auth/logout', [tokenAuthentication.Handle], controller.Logout)
 router.get('/api/auth/public_key', cors(corsOptions), controller.getPublicKey)     //them cors
 router.get('/api/auth/test', controller.Test)

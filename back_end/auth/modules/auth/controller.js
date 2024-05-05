@@ -12,6 +12,7 @@ const axios = require('axios');
 const { response } = require("express");
 const buffer = require('buffer');
 const crypto = require('crypto');
+const responseTrait = require('../../traits/responseTrait')
 
 const getUser = async (user_id) => {
     try {
@@ -41,7 +42,7 @@ const getScope = async (user_id, scopes) => {
         let valid_scopes = ''
 
         for (const req_scope of req_scopes) {
-            if (data.scopes.includes(req_scope))
+            if (data.data.scopes.includes(req_scope))
                 valid_scopes = valid_scopes + req_scope + ' '
         }
 
@@ -69,17 +70,14 @@ exports.AuthCodeGrant = async (req, res) => {
         // save code for checking
         await codeService.saveAuthCode(code, data.client_id, data.user_id, process.env.AUTH_CODE_EXP)
 
-        return res.status(200).json({
+        return responseTrait.ResponseSuccess(res, {
             code: code,
             user_id: data.user_id,
             state: data.state == null ? null : data.state,
         })
 
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({
-            msg: 'server err'
-        })
+        return responseTrait.ResponseInternalServer(res)
     }
 }
 
@@ -96,22 +94,12 @@ exports.TokenGrant = async (req, res) => {
             data.client_id == null ||
             data.user_id == null ||
             data.scope == null)
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: 'invalid request',
-                }
-            })
+            return responseTrait.ResponseInvalid(res)
 
         const refresh_token = await tokenService.getRefreshToken(data.client_id, data.user_id)
         
         if (refresh_token != data.refresh_token) {
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: "invalid refresh token do token ko dong nhat",
-                }
-            })
+            return responseTrait.ResponseInvalid(res)
         }
 
         // verify refresh token bang publicKey
@@ -122,12 +110,7 @@ exports.TokenGrant = async (req, res) => {
             });
         } catch (error) {
             console.log(error)
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: "invalid refresh token do public key",
-                }
-            })
+            return responseTrait.ResponseInvalid(res)
         }
 
         // generate scope
@@ -138,12 +121,7 @@ exports.TokenGrant = async (req, res) => {
         if (data.code == null ||
             data.redirect_uri == null ||
             data.client_id == null)
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: 'invalid request',
-                }
-            })
+            return responseTrait.ResponseInvalid(res)
     
         // get code for checking
         const dataFromCode = helpers.Generator.getDataFromCode(data.code) ? helpers.Generator.getDataFromCode(data.code) : undefined
@@ -151,31 +129,16 @@ exports.TokenGrant = async (req, res) => {
         const code = await codeService.getAuthCode(dataFromCode?.client_id, dataFromCode?.user_id)
     
         if (!code)
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: "code invalid!",
-                }
-            })
+            return responseTrait.ResponseInvalid(res)
     
         if (code != data.code) {
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: "invalid code",
-                }
-            })
+            return responseTrait.ResponseInvalid(res)
         } else {
             await codeService.removeAuthCode(dataFromCode.client_id, dataFromCode.user_id)
         }
 
         if (data.redirect_uri != dataFromCode?.redirect_uri) {
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: "redirect_uri invalid!",
-                }
-            })
+            return responseTrait.ResponseInvalid(res)
         }
         
         // create id token jwt payload
@@ -205,12 +168,7 @@ exports.TokenGrant = async (req, res) => {
         scope = await getScope(dataFromCode.user_id, dataFromCode.scope)
         user_id = dataFromCode.user_id
     } else {
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'invalid request',
-            }
-        })
+        return responseTrait.ResponseInvalid(res)
     }
 
     // create access token jwt payload + cần thêm claims về scopes
@@ -235,7 +193,7 @@ exports.TokenGrant = async (req, res) => {
     await tokenService.savePublicKey(publicKey, data.client_id, user_id)
     await tokenService.saveRefreshToken(refresh_token, data.client_id, user_id)
 
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         access_token: access_token,
         token_type: 'Bearer',
         expires_in: process.env.TOKEN_EXP,
@@ -244,72 +202,52 @@ exports.TokenGrant = async (req, res) => {
     })
 }
 
-exports.ClientRegistration = async (req, res) => {
-    const data = req.body
+// exports.ClientRegistration = async (req, res) => {
+//     const data = req.body
 
-    if (data.redirect_uri == null ||
-        data.homepage_url == null ||
-        data.name == null )
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: "invalid request",
-            }
-        })
+//     if (data.redirect_uri == null ||
+//         data.homepage_url == null ||
+//         data.name == null )
+//         return responseTrait.ResponseInvalid(res)
     
-    if (!Array.isArray(data.redirect_uri) || (Array.isArray(data.redirect_uri) && data.redirect_uri.length == 0))
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: "invalid request",
-            }
-        })
+//     if (!Array.isArray(data.redirect_uri) || (Array.isArray(data.redirect_uri) && data.redirect_uri.length == 0))
+//         return responseTrait.ResponseInvalid(res)
     
-    const client_id = randomstring.generate(20)
-    const client_secret = randomstring.generate(20)
-    const hash = Crypto.SHA256(client_secret)
+//     const client_id = randomstring.generate(20)
+//     const client_secret = randomstring.generate(20)
+//     const hash = Crypto.SHA256(client_secret)
     
-    const config = {
-        id: client_id,
-        client_secret: hash.toString(Crypto.enc.Hex),
-        redirect_uri: data.redirect_uri.toString(),
-        client_type: true,
-        name: data.name,
-        homepage_url: data.homepage_url,
-        description: data.description != null ? data.description : null,
-    }
+//     const config = {
+//         id: client_id,
+//         client_secret: hash.toString(Crypto.enc.Hex),
+//         redirect_uri: data.redirect_uri.toString(),
+//         client_type: true,
+//         name: data.name,
+//         homepage_url: data.homepage_url,
+//         description: data.description != null ? data.description : null,
+//     }
 
-    await clientService.createClient(config)
+//     await clientService.createClient(config)
 
-    return res.status(200).json({
-        client_id: client_id,
-        client_secret: client_secret
-    })
-}
+//     return responseTrait.ResponseSuccess(res, {
+//         client_id: client_id,
+//         client_secret: client_secret
+//     })
+// }
 
 exports.getPublicKey = async (req, res) => {
     const data = req.query
 
     if (data.client_id == null || 
         data.user_id == null)
-        return res.status(405).json({
-            error: {
-                status: 405,
-                detail: 'missing parameter'
-            }
-        })
+        return responseTrait.ResponseInvalid(res)
 
     const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
 
     if (!public_key)
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: "invalid request",
-            }
-        })
-    
-    return res.status(200).json({
+        return responseTrait.ResponseInvalid(res)
+
+    return responseTrait.ResponseSuccess(res, {
         public_key: public_key
     })
 }
@@ -318,15 +256,9 @@ exports.Logout = async (req, res) => {
     const data = req.body
     await tokenService.destroyAccessToken(data.client_id, data.user_id)
 
-    return res.status(200).json({
-        status:"logout successful"
-    })
+    return responseTrait.ResponseSuccess(res, null)
 }
 
 exports.Test = async (req, res) => {
-    const data = req.query
-    console.log(data)
-    return res.status(200).json({
-        msg: "msg"
-    })
+    return responseTrait.ResponseInvalid(res)
 }

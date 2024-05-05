@@ -1,3 +1,5 @@
+const responseTrait = require('../../../traits/responseTrait')
+
 exports.Handle = async (req, res, next) => {
     const authorization = req.get('Authorization')
 
@@ -7,20 +9,10 @@ exports.Handle = async (req, res, next) => {
         const client = await ClientValidation(data.client_id, secret)
 
         if (!client) {
-            return res.status(400).json({
-                error: {
-                    status: 400,
-                    detail: 'invalid client',
-                }
-            })
+            return responseTrait.ResponseUnauthenticate(res)
         }
     } else {
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'invalid client',
-            }
-        })
+        return responseTrait.ResponseUnauthenticate(res)
     }
 
     next()

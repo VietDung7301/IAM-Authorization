@@ -85,5 +85,5 @@ func verifyScopes(url_string string, method string, scopes interface{}) bool {
 
 	responseCheck := jsonparse.JsonSimpleParse(data)
 
-	return responseCheck["check"].(bool)
+	return responseCheck["data"].(map[string]interface{})["check"].(bool)
 }

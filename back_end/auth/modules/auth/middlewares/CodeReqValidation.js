@@ -1,23 +1,15 @@
+const responseTrait = require('../../../traits/responseTrait')
+
 exports.Handle = async (req, res, next) => {
     const data = req.body
 
     if (data.response_type == null || 
         data.client_id == null ||
         data.redirect_uri == null)
-        return res.status(405).json({
-            error: {
-                status: 405,
-                detail: 'missing parameter'
-            }
-        })
+        return responseTrait.ResponseInvalid(res)
 
     if (data.response_type != 'code')
-        return res.status(405).json({
-            error: {
-                status: 405,
-                detail: 'unsupported response type'
-            }
-        })
+        return responseTrait.ResponseInvalid(res)
 
     next()
 }

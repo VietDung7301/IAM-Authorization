@@ -17,20 +17,10 @@ exports.Handle = async (req, res, next) => {
     // check fingerprint
     const result = await FingerprintValidation(user_id, data.fingerprint)
     if (!result || result.otp == undefined) {
-        return res.status(500).json({
-            error: {
-                status: 500,
-                detail: 'server error'
-            }
-        })
+        return responseTrait.ResponseInternalServer(res)
     }
     if (result.otp != '' || result.otp != null) {
-        return res.status(422).json({
-            error: {
-                status: 422,
-                detail: 'otp sent'
-            }
-        })
+        return responseTrait.ResponseRedirect(res)
     }
 
     req.body.user_id = user_id
@@ -49,7 +39,7 @@ const UserValidation = async (username, password) => {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         })
-        return data.user.id
+        return data.data.user.id
     } catch (error) {
         console.log(error)
         return false
@@ -66,7 +56,7 @@ const FingerprintValidation = async (user_id, fingerprint) => {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         })
-        return data
+        return data.data
     } catch (error) {
         console.log(error)
         return false

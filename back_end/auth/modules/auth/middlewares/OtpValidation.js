@@ -1,32 +1,18 @@
 const axios = require('axios')
+const responseTrait = require('../../../traits/responseTrait')
 
 exports.Handle = async (req, res, next) => {
     const data = req.body
     
     if (data.otp == null || data.fingerprint == null) {
-        return res.status(401).json({
-            error: {
-                status: 401,
-                detail: 'invalid request'
-            }
-        })
+        return responseTrait.ResponseInvalid(res)
     }
 
     const otpValid = await OtpValidation(data.otp, data.user_id)
     if (!otpValid)
-        return res.status(500).json({
-            error: {
-                status: 500,
-                detail: 'server error'
-            }
-        })
+        return responseTrait.ResponseInternalServer(res)
     if (!otpValid.check)
-        return res.status(401).json({
-            error: {
-                status: 401,
-                detail: 'unauthorized'
-            }
-        })
+        return responseTrait.ResponseUnauthenticate(res)
 
     await saveFingerprint(data.fingerprint, data.user_id)
     req.body.user_id = data.user_id
@@ -43,7 +29,7 @@ const OtpValidation = async (otp, user_id) => {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         })
-        return data
+        return data.data
     } catch (error) {
         console.log(error)
         return false

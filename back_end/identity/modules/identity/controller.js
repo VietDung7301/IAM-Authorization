@@ -97,17 +97,12 @@ exports.authenticateFingerprint = async (req, res) => {
 
     const fingerprints = await FingerprintService.getFingerprints(config)
     if (fingerprints == false) {
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'cannot find fingerprint'
-            }
-        })
+        return responseTrait.ResponseGeneralError(res, "cannot find fingerprint")
     }
 
     for (const [key, value] of Object.entries(fingerprints.dataValues)) {
         if (key != 'user_id' && value == fingerprint) {
-            return res.status(200).json({
+            return responseTrait.ResponseSuccess(res, {
                 otp: ''
             })
         }
@@ -121,26 +116,16 @@ exports.authenticateFingerprint = async (req, res) => {
         expires: new Date().getTime() + process.env.OTP_EXPIRES
     })
     if (!result) {
-        return res.status(500).json({
-            error: {
-                status: 500,
-                detail: 'cannot save otp'
-            }
-        })
+        return responseTrait.ResponseGeneralError(res, "cannot save otp")
     }
     // send otp
     const user = await UserService.getUser({id: user_id})
     // có thể cần gửi lại liên tục trong 1 khoảng nhất định
     const sentOtpResult = await OtpService.sendOtp({email: user.email, otp: otp})
     if (!sentOtpResult) {
-        return res.status(500).json({
-            error: {
-                status: 500,
-                detail: 'cannot send otp'
-            }
-        })
+        return responseTrait.ResponseGeneralError(res, "cannot send otp")
     }
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         otp: otp
     })
 }
@@ -154,12 +139,7 @@ exports.saveFingerprint = async (req, res) => {
     }
     const fingerprints = await FingerprintService.getFingerprints(config)
     if (fingerprints == false) {
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'cannot find fingerprint'
-            }
-        })
+        return responseTrait.ResponseGeneralError(res, "cannot find fingerprint")
     }
     let assigned = 0
     for (const [key, value] of Object.entries(fingerprints.dataValues)) {
@@ -175,14 +155,9 @@ exports.saveFingerprint = async (req, res) => {
     }
     const result = await FingerprintService.saveFingerprint(fingerprints.dataValues)
     if (!result) {
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'cannot save fingerprint'
-            }
-        })
+        return responseTrait.ResponseGeneralError(res, "cannot save fingerprint")
     }   
-    return res.status(200).json({})
+    return responseTrait.ResponseSuccess(res, null)
 }
 
 exports.authenticateOtp = async (req, res) => {
@@ -193,12 +168,7 @@ exports.authenticateOtp = async (req, res) => {
     }
     const result = await OtpService.getOtp(config)
     if (!result) {
-        return res.status(400).json({
-            error: {
-                status: 400,
-                detail: 'cannot find otp'
-            }
-        })
+        return responseTrait.ResponseGeneralError(res, "cannot find otp")
     }
 
     if (result.is_used === 0 && new Date().getTime() < result.expires && data.otp == result.otp) {
@@ -209,11 +179,11 @@ exports.authenticateOtp = async (req, res) => {
             otp: result.otp,
             expires: result.expires
         })
-        return res.status(200).json({
+        return responseTrait.ResponseSuccess(res, {
             check: true
         })
     }
-    return res.status(200).json({
+    return responseTrait.ResponseSuccess(res, {
         check: false
     })
 }

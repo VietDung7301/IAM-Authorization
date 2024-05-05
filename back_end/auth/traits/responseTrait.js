@@ -29,3 +29,7 @@ exports.ResponseNotFound = (res) => {
 exports.ResponseGeneralError = (res, msg) => {
     return this.Response(res, 500, msg, null)
 }
+
+exports.ResponseRedirect = (res) => {
+    return this.Response(res, 202, "redirect", null)
+} 

@@ -96,6 +96,13 @@ const modelConfig = {
                 foreignKey: 'user_id',
             },
         },
+        {
+            relation: 'hasMany',
+            target: 'Otp',
+            options: {
+                foreignKey: 'user_id',
+            },
+        },
     ],
 }
 

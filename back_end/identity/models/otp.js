@@ -1,31 +1,27 @@
 const { DataTypes } = require('sequelize');
 
 const modelConfig = {
-    name: 'Fingerprint',
+    name: 'Otp',
     attributes: {
         user_id: {
             type: DataTypes.STRING,
             primaryKey: true,
         },
-        fingerprint_1: {
-            type: DataTypes.STRING,
-            allowNull: true,
+        type: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
         },
-        fingerprint_2: {
-            type: DataTypes.STRING,
-            allowNull: true,
+        otp: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
         },
-        fingerprint_3: {
-            type: DataTypes.STRING,
-            allowNull: true,
+        is_used: {
+            type: DataTypes.TINYINT,
+            allowNull: false,
         },
-        fingerprint_4: {
+        expires: {
             type: DataTypes.STRING,
-            allowNull: true,
-        },
-        fingerprint_5: {
-            type: DataTypes.STRING,
-            allowNull: true,
+            allowNull: false,
         },
     },
     associations: [

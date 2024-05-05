@@ -50,7 +50,10 @@ const initDB = async () => {
     const sequelize = new Sequelize(connectOptions.db, connectOptions.user, connectOptions.pass, {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
-        dialect: 'mysql'
+        dialect: 'mysql',
+        define: {
+            timestamps: false,
+        },
     })
 
     

@@ -7,12 +7,14 @@ const userValidation = require('./middlewares/UserValidation')
 const clientValidation = require('./middlewares/ClientValidation')
 const clientAuthentication = require('./middlewares/ClientAuthentication')
 const tokenAuthentication = require('./middlewares/TokenAuthentication')
+const otpValidation = require('./middlewares/OtpValidation')
 
 const corsOptions = {
     origin: [process.env.ACCESS_URL],
 }
 
 router.post('/api/auth/code', [codeReqValidation.Handle, userValidation.Handle, clientValidation.Handle], controller.AuthCodeGrant)
+router.post('/api/auth/code/otp', [otpValidation.Handle], controller.AuthCodeGrantByOtp)
 router.post('/api/auth/token', [clientAuthentication.Handle], controller.TokenGrant)
 // router.post('/api/auth/client', controller.ClientRegistration)
 router.post('/api/auth/logout', [tokenAuthentication.Handle], controller.Logout)

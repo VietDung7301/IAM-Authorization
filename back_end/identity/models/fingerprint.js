@@ -7,23 +7,7 @@ const modelConfig = {
             type: DataTypes.STRING,
             primaryKey: true,
         },
-        fingerprint_1: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        fingerprint_2: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        fingerprint_3: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        fingerprint_4: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        fingerprint_5: {
+        fingerprints: {
             type: DataTypes.STRING,
             allowNull: true,
         },

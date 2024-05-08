@@ -91,22 +91,21 @@ exports.authenticateFingerprint = async (req, res) => {
     const data = req.body
     const fingerprint = data.fingerprint
     const user_id = data.user_id
-    const config = {
-        user_id: user_id
-    }
 
-    const fingerprints = await FingerprintService.getFingerprints(config)
-    if (fingerprints == false) {
-        return responseTrait.ResponseGeneralError(res, "cannot find fingerprint")
-    }
+    // basic validation
+    if (!user_id || user_id == '') 
+        return responseTrait.ResponseInvalid(res)
 
-    for (const [key, value] of Object.entries(fingerprints.dataValues)) {
-        if (key != 'user_id' && value == fingerprint) {
+    const fingerprints = await FingerprintService.getFingerprints({user_id: user_id})
+    if (fingerprints) {
+        const fingerprintsArr = fingerprints.split(',')
+        if (fingerprintsArr.includes(fingerprint)) {
             return responseTrait.ResponseSuccess(res, {
                 otp: ''
             })
         }
     }
+
     const otp = OtpService.generateOtp()
     const result = await OtpService.saveOtp({
         user_id: user_id, 
@@ -134,26 +133,27 @@ exports.saveFingerprint = async (req, res) => {
     const data = req.body
     const fingerprint = data.fingerprint
     const user_id = data.user_id
-    const config = {
-        user_id: user_id
+    const payload = {
+        user_id: user_id,
+        fingerprints: null,
     }
-    const fingerprints = await FingerprintService.getFingerprints(config)
-    if (fingerprints == false) {
-        return responseTrait.ResponseGeneralError(res, "cannot find fingerprint")
-    }
-    let assigned = 0
-    for (const [key, value] of Object.entries(fingerprints.dataValues)) {
-        if (key != 'user_id' && (value == null || value == '')) {
-            fingerprints.dataValues[key] = fingerprint
-            assigned = 1 
-            break
+
+    // basic validation
+    if ((!fingerprint || !user_id) || (fingerprint == '' || user_id == '')) 
+        return responseTrait.ResponseInvalid(res)
+    
+    const fingerprints = await FingerprintService.getFingerprints({user_id: user_id})
+    if (fingerprints) {
+        const fingerprintsArr = fingerprints.split(',')
+        if (fingerprintsArr.length >= process.env.MAX_FINGERPRINTS) {
+            fingerprintsArr.shift()
         }
+        fingerprintsArr.push(fingerprint)
+        payload.fingerprints = fingerprintsArr.toString() 
+    } else {
+        payload.fingerprints = fingerprint
     }
-    if (!assigned) {
-        //luôn bị gán vào device 1 (!)
-        fingerprints.fingerprint_1 = fingerprint
-    }
-    const result = await FingerprintService.saveFingerprint(fingerprints.dataValues)
+    const result = await FingerprintService.saveFingerprint(payload)
     if (!result) {
         return responseTrait.ResponseGeneralError(res, "cannot save fingerprint")
     }   

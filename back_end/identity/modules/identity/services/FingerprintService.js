@@ -4,7 +4,7 @@ exports.getFingerprints = async (config) => {
         if (fingerprints == null) {
             return false
         }
-        return fingerprints
+        return fingerprints.fingerprints
     } catch (error) {
         console.log(error)
         return false

@@ -119,9 +119,18 @@ exports.authenticateFingerprint = async (req, res) => {
     }
     // send otp
     const user = await UserService.getUser({id: user_id})
-    // có thể cần gửi lại liên tục trong 1 khoảng nhất định
     const sentOtpResult = await OtpService.sendOtp({email: user.email, otp: otp})
     if (!sentOtpResult) {
+        let count = 1
+        while (count < process.env.RESEND_EMAIL_COUNT) {
+            if (await OtpService.sendOtp({email: user.email, otp: otp})) {
+                return responseTrait.ResponseSuccess(res, {
+                    otp: otp
+                })
+            } else {
+                count++
+            }
+        }
         return responseTrait.ResponseGeneralError(res, "cannot send otp")
     }
     return responseTrait.ResponseSuccess(res, {

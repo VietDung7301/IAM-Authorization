@@ -118,36 +118,6 @@ exports.AuthCodeGrantByOtp = async (req, res) => {
     }
 }
 
-exports.AuthCodeGrantByOtp = async (req, res) => {
-    try {
-        const data = req.body
-        // generate code
-        // co the nen de rieng khai bao cac truong cua code
-        const code = helpers.Generator.generateCode({
-            user_id: data.user_id,
-            client_id: data.client_id,
-            scope: data?.scope,
-            redirect_uri: data.redirect_uri,
-            created_at: Math.floor(Date.now() / 1000),
-        })
-
-        // save code for checking
-        await codeService.saveAuthCode(code, data.client_id, data.user_id, process.env.AUTH_CODE_EXP)
-
-        return res.status(200).json({
-            code: code,
-            user_id: data.user_id,
-            state: data.state == null ? null : data.state,
-        })
-
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({
-            msg: 'server err'
-        })
-    }
-}
-
 exports.TokenGrant = async (req, res) => {
     let id_token = ''
     let access_token = ''

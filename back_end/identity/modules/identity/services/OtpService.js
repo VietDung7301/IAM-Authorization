@@ -26,7 +26,7 @@ exports.sendOtp = async (data) => {
             to: data.email, // list of receivers
             subject: "Your OTP", // Subject line
             text: data.otp, // plain text body
-            html: `<b>${data.otp}</b><p>Expire in 60s. Do not share this OTP</p>`, // html body
+            html: `<b>${data.otp}</b><p>Expire in ${process.env.OTP_EXPIRES}s. Do not share this OTP</p>`, // html body
         });
         return info.messageId
     } catch (error) {

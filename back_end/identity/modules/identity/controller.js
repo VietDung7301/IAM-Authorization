@@ -198,8 +198,8 @@ exports.authenticateOtp = async (req, res) => {
     }
 
     console.log(result.expires)
-    console.log(new Date().getTime())
-    if (result.is_used === 0 && new Date().getTime() < result.expires && data.otp == result.otp) {
+    console.log(Math.round(new Date().getTime()/1000))
+    if (result.is_used === 0 && Math.round(new Date().getTime()/1000) < result.expires && data.otp == result.otp) {
         await OtpService.saveOtp({
             user_id: data.user_id, 
             type: 1, 

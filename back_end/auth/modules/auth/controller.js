@@ -1,6 +1,7 @@
 const clientService = require("./services/ClientService");
 const codeService = require("./services/CodeService")
 const tokenService = require("./services/TokenService")
+const markedUserService = require("./services/MarkedUserService")
 const helpers = require('../../helpers');
 const randomstring = require("randomstring");
 const Crypto = require("crypto-js");
@@ -13,16 +14,6 @@ const { response } = require("express");
 const buffer = require('buffer');
 const crypto = require('crypto');
 const responseTrait = require('../../traits/responseTrait')
-
-const getFingerprints = async (user_id) => {
-    try {
-        const data = await axios.get(`${process.env.IDEN_URL}/api/iden/user/${user_id}/fingerprints`)
-        return data.fingerprints
-    } catch (error) {
-        console.log(error)
-        return null
-    }
-}
 
 const getUser = async (user_id) => {
     try {
@@ -63,12 +54,11 @@ const getScope = async (user_id, scopes) => {
     }
 }
 
-exports.AuthCodeGrant = async (req, res) => {
+exports.authCodeGrant = async (req, res) => {
     try {
         const data = req.body
-        console.log(data)
+        const markedUser = await markedUserService.getMarkedUser(data.user_id)
         // generate code
-        // co the nen de rieng khai bao cac truong cua code
         const code = helpers.Generator.generateCode({
             user_id: data.user_id,
             client_id: data.client_id,
@@ -84,41 +74,16 @@ exports.AuthCodeGrant = async (req, res) => {
             code: code,
             user_id: data.user_id,
             state: data.state == null ? null : data.state,
+            otp: !markedUser || markedUser.is_checked ? false : true,
         })
 
     } catch (error) {
+        console.log(error)
         return responseTrait.ResponseInternalServer(res)
     }
 }
 
-exports.AuthCodeGrantByOtp = async (req, res) => {
-    try {
-        const data = req.body
-        // generate code
-        // co the nen de rieng khai bao cac truong cua code
-        const code = helpers.Generator.generateCode({
-            user_id: data.user_id,
-            client_id: data.client_id,
-            scope: data?.scope,
-            redirect_uri: data.redirect_uri,
-            created_at: Math.floor(Date.now() / 1000),
-        })
-
-        // save code for checking
-        await codeService.saveAuthCode(code, data.client_id, data.user_id, process.env.AUTH_CODE_EXP)
-
-        return responseTrait.ResponseSuccess(res, {
-            code: code,
-            user_id: data.user_id,
-            state: data.state == null ? null : data.state,
-        })
-
-    } catch (error) {
-        return responseTrait.ResponseInternalServer(res)
-    }
-}
-
-exports.TokenGrant = async (req, res) => {
+exports.tokenGrant = async (req, res) => {
     let id_token = ''
     let access_token = ''
     let refresh_token = ''
@@ -289,13 +254,78 @@ exports.getPublicKey = async (req, res) => {
     })
 }
 
-exports.Logout = async (req, res) => {
+exports.logout = async (req, res) => {
     const data = req.body
     await tokenService.destroyAccessToken(data.client_id, data.user_id)
 
     return responseTrait.ResponseSuccess(res, null)
 }
 
-exports.Test = async (req, res) => {
-    return responseTrait.ResponseInvalid(res)
+exports.sendOtp = async (req, res) => {
+    const data = req.body
+    const user_id = data.user_id
+
+    if (!user_id || user_id == '') {
+        return responseTrait.ResponseInvalid(res)
+    }
+
+    const marked_user = await markedUserService.getMarkedUser(user_id)
+    if (!marked_user || marked_user.is_checked) {
+        return responseTrait.ResponseInvalid(res)
+    }
+
+    // call api send otp
+    try {
+        const {data} = await axios.post(`${process.env.IDEN_URL}/api/iden/otp/send`, {
+            user_id: user_id,
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
+        if (data.status_code != 200) {
+            return responseTrait.ResponseInternalServer(res)   
+        }
+        return responseTrait.ResponseSuccess(res, null)
+    } catch (error) {
+        console.log(error)
+        return responseTrait.ResponseInternalServer(res)
+    }
+}
+
+exports.authenticateOtp = async (req, res) => {
+    const data = req.body
+    const user_id = data.user_id
+    const otp = data.otp
+    const fingerprint = data.fingerprint
+
+    if (!user_id || user_id == '' ||
+        !otp || otp == '' ||
+        !fingerprint || fingerprint == '' ) {
+        return responseTrait.ResponseInvalid(res)
+    }
+
+    try {
+        const {data} = await axios.post(`${process.env.IDEN_URL}/api/iden/otp/authen`, {
+            otp: otp,
+            user_id: user_id,
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
+        const check  = data.data.check
+        if (check) {
+            const unMarkedUser = await markedUserService.unMarkedUser(user_id, fingerprint)
+            if (!unMarkedUser) {
+                return responseTrait.ResponseInternalServer(res)
+            }
+        }
+        return responseTrait.ResponseSuccess(res, {
+            check: check
+        })
+    } catch (error) {
+        console.log(error)
+        return responseTrait.ResponseInternalServer(res)
+    }
 }

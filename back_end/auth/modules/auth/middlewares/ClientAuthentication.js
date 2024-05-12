@@ -1,6 +1,7 @@
 const responseTrait = require('../../../traits/responseTrait')
 
 exports.Handle = async (req, res, next) => {
+    console.log('client authentication')
     const data = req.body
     const authorization = req.get('Authorization')
 

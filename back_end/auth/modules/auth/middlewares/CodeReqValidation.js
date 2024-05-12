@@ -1,6 +1,7 @@
 const responseTrait = require('../../../traits/responseTrait')
 
 exports.Handle = async (req, res, next) => {
+    console.log('requirement validation')
     const data = req.body
 
     if (data.response_type == null || 

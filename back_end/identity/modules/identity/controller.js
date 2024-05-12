@@ -101,40 +101,17 @@ exports.authenticateFingerprint = async (req, res) => {
         const fingerprintsArr = fingerprints.split(',')
         if (fingerprintsArr.includes(fingerprint)) {
             return responseTrait.ResponseSuccess(res, {
-                otp: ''
+                check: true
+            })
+        } else {
+            return responseTrait.ResponseSuccess(res, {
+                check: false
             })
         }
     }
 
-    const otp = OtpService.generateOtp()
-    const result = await OtpService.saveOtp({
-        user_id: user_id, 
-        type: 1, 
-        otp: otp, 
-        is_used: 0, 
-        expires: new Date().getTime() + process.env.OTP_EXPIRES
-    })
-    if (!result) {
-        return responseTrait.ResponseGeneralError(res, "cannot save otp")
-    }
-    // send otp
-    const user = await UserService.getUser({id: user_id})
-    const sentOtpResult = await OtpService.sendOtp({email: user.email, otp: otp})
-    if (!sentOtpResult) {
-        let count = 1
-        while (count < process.env.RESEND_EMAIL_COUNT) {
-            if (await OtpService.sendOtp({email: user.email, otp: otp})) {
-                return responseTrait.ResponseSuccess(res, {
-                    otp: otp
-                })
-            } else {
-                count++
-            }
-        }
-        return responseTrait.ResponseGeneralError(res, "cannot send otp")
-    }
     return responseTrait.ResponseSuccess(res, {
-        otp: otp
+        check: false
     })
 }
 
@@ -169,6 +146,46 @@ exports.saveFingerprint = async (req, res) => {
     return responseTrait.ResponseSuccess(res, null)
 }
 
+exports.sendOtp = async (req, res) => {
+    const data = req.body
+    const user_id = data.user_id
+
+    // basic validation
+    if (!user_id || user_id == '') 
+        return responseTrait.ResponseInvalid(res)
+
+    const otp = OtpService.generateOtp()
+    const result = await OtpService.saveOtp({
+        user_id: user_id, 
+        type: 1, 
+        otp: otp, 
+        is_used: 0, 
+        expires: new Date().getTime() + process.env.OTP_EXPIRES*1000
+    })
+    if (!result) {
+        return responseTrait.ResponseGeneralError(res, "cannot save otp")
+    }
+    // send otp
+    const user = await UserService.getUser({id: user_id})
+    const sentOtpResult = await OtpService.sendOtp({email: user.email, otp: otp})
+    if (!sentOtpResult) {
+        let count = 1
+        while (count < process.env.RESEND_EMAIL_COUNT) {
+            if (await OtpService.sendOtp({email: user.email, otp: otp})) {
+                return responseTrait.ResponseSuccess(res, {
+                    otp: otp
+                })
+            } else {
+                count++
+            }
+        }
+        return responseTrait.ResponseGeneralError(res, "cannot send otp")
+    }
+    return responseTrait.ResponseSuccess(res, {
+        otp: otp
+    })
+}
+
 exports.authenticateOtp = async (req, res) => {
     const data = req.body
     const config = {
@@ -180,6 +197,8 @@ exports.authenticateOtp = async (req, res) => {
         return responseTrait.ResponseGeneralError(res, "cannot find otp")
     }
 
+    console.log(result.expires)
+    console.log(new Date().getTime())
     if (result.is_used === 0 && new Date().getTime() < result.expires && data.otp == result.otp) {
         await OtpService.saveOtp({
             user_id: data.user_id, 

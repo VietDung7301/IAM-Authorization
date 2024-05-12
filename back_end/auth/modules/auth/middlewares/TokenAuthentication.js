@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const responseTrait = require('../../../traits/responseTrait')
 
 exports.Handle = async (req, res, next) => {
+    console.log('token authentication')
     const data = req.body
     const authorization = req.get('Authorization')
 

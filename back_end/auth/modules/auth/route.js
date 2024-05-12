@@ -16,10 +16,10 @@ router.post('/api/auth/code', [
             userValidation.Handle, 
             fingerprintCheck.Handle
         ], controller.authCodeGrant)
-router.post('/api/auth/token', [clientAuthentication.Handle], controller.tokenGrant)
+router.post('/api/auth/token', [markedUserValidation.Handle, clientAuthentication.Handle], controller.tokenGrant)
 // router.post('/api/auth/client', controller.ClientRegistration)
 
-router.post('/api/auth/logout', [markedUserValidation.Handle, tokenAuthentication.Handle], controller.logout)
+router.post('/api/auth/logout', [tokenAuthentication.Handle], controller.logout)
 
 router.get('/api/auth/public_key', cors({origin: [process.env.ACCESS_URL],}), controller.getPublicKey)
 

@@ -10,6 +10,7 @@ import (
 	"access/helpers/redisconn"
 	"access/helpers/responses"
 	"access/middleware/auth"
+	"access/middleware/ipgeo"
 	"access/middleware/rate"
 	"access/middleware/scope"
 
@@ -38,20 +39,24 @@ func main() {
 	r := mux.NewRouter()
 
 	// init middleware
-	awm := auth.AuthMiddleware{
+	amw := auth.AuthMiddleware{
 		RedisClient: redisClient,
 	}
-	rwm := rate.RateMiddleware{
+	rmw := rate.RateMiddleware{
 		RedisClient: redisClient,
 	}
-	swm := scope.ScopeMiddleware{
+	smw := scope.ScopeMiddleware{
 		//
+	}
+	igmw := ipgeo.IpGeoMiddleware{
+		RedisClient: redisClient,
 	}
 
 	// use middleware
-	r.Use(awm.Handler)
-	r.Use(rwm.Handler)
-	r.Use(swm.Handler)
+	r.Use(amw.Handler)
+	r.Use(rmw.Handler)
+	r.Use(igmw.Handler)
+	r.Use(smw.Handler)
 
 	// use CORS middleware
 	r.Use(mux.CORSMethodMiddleware(r))

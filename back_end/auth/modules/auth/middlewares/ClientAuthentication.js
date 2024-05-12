@@ -1,4 +1,5 @@
 const responseTrait = require('../../../traits/responseTrait')
+const clientService = require('../services/ClientService')
 
 exports.Handle = async (req, res, next) => {
     console.log('client authentication')

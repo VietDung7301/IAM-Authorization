@@ -8,6 +8,7 @@ const clientValidation = require('./middlewares/ClientValidation')
 const clientAuthentication = require('./middlewares/ClientAuthentication')
 const tokenAuthentication = require('./middlewares/TokenAuthentication')
 const fingerprintCheck = require('./middlewares/FingerprintCheck')
+const markedUserValidation = require('./middlewares/MarkedUserValidation')
 
 router.post('/api/auth/code', [
             codeReqValidation.Handle, 
@@ -18,7 +19,7 @@ router.post('/api/auth/code', [
 router.post('/api/auth/token', [clientAuthentication.Handle], controller.tokenGrant)
 // router.post('/api/auth/client', controller.ClientRegistration)
 
-router.post('/api/auth/logout', [tokenAuthentication.Handle], controller.logout)
+router.post('/api/auth/logout', [markedUserValidation.Handle, tokenAuthentication.Handle], controller.logout)
 
 router.get('/api/auth/public_key', cors({origin: [process.env.ACCESS_URL],}), controller.getPublicKey)
 

@@ -36,7 +36,7 @@ exports.unMarkedUser = async (user_id, fingerprint) => {
         const key = 'marked_user@' + user_id
         const content = {
             is_checked: 1,
-            checked_at: new Date().getTime(),
+            checked_at: Math.round(new Date().getTime()/1000),
             last_2FA_at: fingerprint,
         }
 

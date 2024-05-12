@@ -160,7 +160,7 @@ exports.sendOtp = async (req, res) => {
         type: 1, 
         otp: otp, 
         is_used: 0, 
-        expires: new Date().getTime() + process.env.OTP_EXPIRES*1000
+        expires: Math.round(new Date().getTime()/1000) + process.env.OTP_EXPIRES
     })
     if (!result) {
         return responseTrait.ResponseGeneralError(res, "cannot save otp")

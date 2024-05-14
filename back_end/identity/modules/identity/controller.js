@@ -22,7 +22,6 @@ exports.getUser = async (req, res) => {
         return responseTrait.ResponseNotFound(res)
 
     if (query.claims) {
-        console.log(user.dataValues)
         let claims = query.claims.split(',')
         for (const [key, value] of Object.entries(user.dataValues)) {
             if (!claims.includes(key)) {

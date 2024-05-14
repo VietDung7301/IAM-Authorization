@@ -18,7 +18,7 @@ const responseTrait = require('../../traits/responseTrait')
 const getUser = async (user_id) => {
     try {
         const {data} = await axios.get(`${process.env.IDEN_URL}/api/iden/user/${user_id}`)
-        return data.user
+        return data.data.user
     } catch (error) {
         console.log(error)
         return false
@@ -108,7 +108,7 @@ exports.tokenGrant = async (req, res) => {
         const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
         try {
             jwt.verify(refresh_token, public_key, function(err, decoded) {
-                console.log(decoded.string)
+                id_token = decoded.id_token
             });
         } catch (error) {
             console.log(error)
@@ -190,7 +190,10 @@ exports.tokenGrant = async (req, res) => {
     const { publicKey, privateKey } = helpers.Generator.generateKeyPair()
 
     access_token = helpers.JWT.genAccessToken(access_token_claims, privateKey)
-    refresh_token = helpers.JWT.genAccessToken({string: randomstring.generate(30)}, privateKey)
+    refresh_token = helpers.JWT.genAccessToken({
+        string: randomstring.generate(30),
+        id_token: id_token,
+    }, privateKey)
 
     await tokenService.savePublicKey(publicKey, data.client_id, user_id)
     await tokenService.saveRefreshToken(refresh_token, data.client_id, user_id)

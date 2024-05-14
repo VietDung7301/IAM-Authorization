@@ -4,7 +4,12 @@ exports.getAll = async () => {
 
 exports.getUser = async (config) => {
     try {
-        const user = await DB_CONNECTION.models.User.findOne({where: config})
+        const user = await DB_CONNECTION.models.User.findOne({
+            where: config,
+            attributes: {
+                exclude: ['password', 'role_id'],
+            }
+        })
         if (user == null) {
             return false
         }

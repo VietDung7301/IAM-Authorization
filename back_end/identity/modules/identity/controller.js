@@ -12,6 +12,7 @@ exports.getAll = async (req, res) => {
 
 exports.getUser = async (req, res) => {
     const id = req.params.id
+    const query = req.query
     const config = {
         id: id
     }
@@ -19,6 +20,16 @@ exports.getUser = async (req, res) => {
 
     if (!user)
         return responseTrait.ResponseNotFound(res)
+
+    if (query.claims) {
+        console.log(user.dataValues)
+        let claims = query.claims.split(',')
+        for (const [key, value] of Object.entries(user.dataValues)) {
+            if (!claims.includes(key)) {
+                delete user.dataValues[key]
+            }
+        }
+    }
 
     return responseTrait.ResponseSuccess(res, {
         user:user

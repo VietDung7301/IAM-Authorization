@@ -74,7 +74,7 @@ const initDB = async () => {
             Scopes: [
                 {
                     id: '123',
-                    title: 'test role',
+                    title: 'scope1',
                     active: 1,
                 },
             ]

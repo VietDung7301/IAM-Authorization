@@ -1,4 +1,4 @@
-const { Sequelize } = require('sequelize');
+const { Sequelize, QueryInterface } = require('sequelize');
 const { models } = require('../models')
 require("dotenv").config();
 
@@ -65,7 +65,17 @@ const initDB = async () => {
     console.log("All models were synchronized successfully.");
 
     //data
-    
+    console.log('insert data')
+    await sequelize.models.Client.bulkCreate([
+        {
+            id: '123',
+            client_secret: '123',
+            redirect_uri: 'www.google.com',
+            client_type: 1,
+            name: 'web client',
+            homepage_url: 'www.google.com',
+        },
+    ])
 
     // systemDB.close();
     console.log("\n\nDone. Initial database successfully.");

@@ -51,12 +51,7 @@ const initDB = async () => {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         dialect: 'mysql',
-        define: {
-            timestamps: false,
-        },
     })
-
-    
 
     /**
      * Xóa dữ liệu cũ và khởi tạo dữ liệu mới
@@ -68,7 +63,21 @@ const initDB = async () => {
     console.log("All models were synchronized successfully.");
 
     //data
-    
+    console.log('insert data')
+    await sequelize.models.User.bulkCreate([
+        {
+            id: '123',
+            role_id: '123',
+            username: 'test',
+            password: 'test',
+            name: 'test',
+            email: 'test@gmail.com',
+            email_verified: 1,
+            birthdate: new Date(),
+            phone_number: '0987654321',
+            phone_number_verified: 1,
+        },
+    ])
 
     // systemDB.close();
     console.log("\n\nDone. Initial database successfully.");

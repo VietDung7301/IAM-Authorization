@@ -8,7 +8,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 type ScopeMiddleware struct {
@@ -51,14 +54,19 @@ func (smw *ScopeMiddleware) Handler(next http.Handler) http.Handler {
 }
 
 func verifyScopes(url_string string, method string, scopes interface{}) bool {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("Error loading .env file - ipgeo\n")
+	}
 	client := &http.Client{}
 	body := url.Values{}
 	body.Set("url", url_string)
 	body.Set("method", method)
 	body.Set("scopes", scopes.(string))
 
+	roleUrl := os.Getenv("ROLE_URL")
 	encodedBody := body.Encode()
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:8003/api/permission/check", strings.NewReader(encodedBody))
+	req, err := http.NewRequest(http.MethodPost, roleUrl, strings.NewReader(encodedBody))
 	if err != nil {
 		fmt.Printf("ko tao dc req\n")
 		return false

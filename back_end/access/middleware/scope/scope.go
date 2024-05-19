@@ -56,7 +56,7 @@ func (smw *ScopeMiddleware) Handler(next http.Handler) http.Handler {
 func verifyScopes(url_string string, method string, scopes interface{}) bool {
 	err := godotenv.Load()
 	if err != nil {
-		fmt.Printf("Error loading .env file - ipgeo\n")
+		fmt.Printf("Error loading .env file - scope\n")
 	}
 	client := &http.Client{}
 	body := url.Values{}

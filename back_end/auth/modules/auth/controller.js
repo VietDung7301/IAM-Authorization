@@ -38,8 +38,6 @@ const getScope = async (user_id, scopes) => {
         const {data} = await axios.get(`${process.env.ROLE_URL}/api/get-scopes-from-role/${user.role_id}`)
         const req_scopes = scopes.split(' ')
 
-        console.log('request scopes: ', req_scopes)
-
         let valid_scopes = ''
 
         for (const req_scope of req_scopes) {
@@ -267,10 +265,12 @@ exports.logout = async (req, res) => {
 exports.sendOtp = async (req, res) => {
     const data = req.body
     const user_id = data.user_id
+    console.log(user_id)
 
     if (!user_id || user_id == '') {
         return responseTrait.ResponseInvalid(res)
     }
+    console.log(user_id + ' heheh')
 
     const marked_user = await markedUserService.getMarkedUser(user_id)
     if (!marked_user || marked_user.is_checked) {

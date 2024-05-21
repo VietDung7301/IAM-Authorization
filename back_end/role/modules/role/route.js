@@ -11,6 +11,5 @@ const controller = require('./controller');
 
 router.post('/api/permission/check', controller.checkPermission)    // thêm cors
 router.get('/api/get-scopes-from-role/:roleId', controller.getScopesFromRoleId) // thêm cors
-router.get('/api/role/test', controller.test)
 
 module.exports = router;

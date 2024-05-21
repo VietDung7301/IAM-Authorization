@@ -65,7 +65,34 @@ const initDB = async () => {
     console.log("All models were synchronized successfully.");
 
     //data
-    
+    console.log('insert data')
+    await sequelize.models.Role.bulkCreate([
+        {
+            id: '123',
+            title: 'test role',
+            active: 1,
+            Scopes: [
+                {
+                    id: '123',
+                    title: 'scope1',
+                    active: 1,
+                },
+            ]
+        },
+    ],
+    {
+        include: sequelize.models.Scope,
+    })
+    await sequelize.models.Permission.bulkCreate([
+        {
+            id: '123',
+            title: 'test permission',
+            active: 1,
+            accessible_url: 'www.google.com',
+            method: 'GET',
+            ScopeId: '123',
+        },
+    ])
 
     // systemDB.close();
     console.log("\n\nDone. Initial database successfully.");

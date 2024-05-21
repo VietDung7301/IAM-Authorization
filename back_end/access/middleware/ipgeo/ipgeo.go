@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -76,9 +78,14 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 
 func locationCheck(ipAddress string) bool {
 	// make api call
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("Error loading .env file - ipgeo\n")
+	}
 	client := &http.Client{}
-	apiKey := "ba175d74993e4030a4e0e2afb1c07ba6" // chuyen sang env
-	ipGeoApi := fmt.Sprintf("https://api.ipgeolocation.io/ipgeo?apiKey=%s&ip=%s", apiKey, ipAddress)
+	apiKey := os.Getenv("IP_GEO_API_KEY")
+	apiUrl := os.Getenv("IP_GEO_URL")
+	ipGeoApi := fmt.Sprintf("%s?apiKey=%s&ip=%s", apiUrl, apiKey, ipAddress)
 	req, err := http.NewRequest(http.MethodGet, ipGeoApi, nil)
 	if err != nil {
 		fmt.Printf("ko tao dc req\n")

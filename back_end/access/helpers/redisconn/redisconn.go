@@ -3,16 +3,22 @@ package redisconn
 import (
 	"context"
 	"fmt"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 )
 
 func ConnectRedis(ctx context.Context) *redis.Client {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("Error loading .env file - redis\n")
+	}
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
+		Addr:     fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
+		Password: os.Getenv("REDIS_PASSWORD"),
 		DB:       0,
-		Username: "",
+		Username: os.Getenv("REDIS_USER"),
 	})
 
 	pong, err := client.Ping(ctx).Result()

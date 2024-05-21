@@ -38,8 +38,6 @@ const getScope = async (user_id, scopes) => {
         const {data} = await axios.get(`${process.env.ROLE_URL}/api/get-scopes-from-role/${user.role_id}`)
         const req_scopes = scopes.split(' ')
 
-        console.log('request scopes: ', req_scopes)
-
         let valid_scopes = ''
 
         for (const req_scope of req_scopes) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"access/helpers/jsonparse"
 	"access/helpers/redisconn"
@@ -15,6 +16,7 @@ import (
 	"access/middleware/scope"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -63,7 +65,12 @@ func main() {
 
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
 
-	http.ListenAndServe(":8004", r)
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("Error loading .env file - main\n")
+	}
+	port := fmt.Sprintf(":%s", os.Getenv("PORT"))
+	http.ListenAndServe(port, r)
 }
 
 func accessResource(w http.ResponseWriter, r *http.Request) {

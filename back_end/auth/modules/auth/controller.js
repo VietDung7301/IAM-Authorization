@@ -4,15 +4,8 @@ const tokenService = require("./services/TokenService")
 const markedUserService = require("./services/MarkedUserService")
 const helpers = require('../../helpers');
 const randomstring = require("randomstring");
-const Crypto = require("crypto-js");
-const { json } = require("body-parser");
-const { generateKeyPairSync, KeyObject } = require("node:crypto")
-const { createPrivateKey } = require("crypto")
 const jwt = require('jsonwebtoken')
 const axios = require('axios');
-const { response } = require("express");
-const buffer = require('buffer');
-const crypto = require('crypto');
 const responseTrait = require('../../traits/responseTrait')
 
 const getUser = async (user_id) => {
@@ -285,7 +278,7 @@ exports.sendOtp = async (req, res) => {
             }
         })
         if (data.status_code != 200) {
-            return responseTrait.ResponseInternalServer(res)   
+            return responseTrait.Response(res, 502, "send otp failed!", null)  
         }
         return responseTrait.ResponseSuccess(res, null)
     } catch (error) {

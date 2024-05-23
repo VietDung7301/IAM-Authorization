@@ -1,6 +1,6 @@
 <template>
-	<iframe id="save-iframe" src={{ SAVE_TOKEN_ENDPOINT }} title="iam"></iframe>
-	<iframe id="get-iframe" src={{ SAVE_TOKEN_ENDPOINT }} title="iam"></iframe>
+	<iframe id="save-iframe" :src="SAVE_TOKEN_ENDPOINT" title="iam"></iframe>
+	<iframe id="get-iframe" :src="GET_TOKEN_ENDPOINT" title="iam"></iframe>
 </template>
 <script setup>
 const config = useRuntimeConfig()
@@ -23,7 +23,7 @@ if (params.code) {
 		() => $fetch(config.public.TOKEN_ENDPOINT, {
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
-				Authorization: `Basic ${config.public.CLIENT_SECRET}`
+				Authorization: `Bearer ${config.public.CLIENT_SECRET}`
 			},
 			method: 'POST',
 			body: new URLSearchParams ({
@@ -31,15 +31,14 @@ if (params.code) {
 				client_id: config.public.CLIENT_ID,
 				redirect_uri: config.public.REDIRECT_URI,
 				grant_type: 'authorization_code',
-				user_id: '123'
 			})
 		})
 	)
 	if (error.value) {
 		console.log('lay token error roi', error)
 	} else {
-		access_token.value = data.value.access_token;
-		refresh_token.value = data.value.refresh_token;
+		access_token.value = data.value.data.access_token;
+		refresh_token.value = data.value.data.refresh_token;
 
 		if (process.browser) {
 			const iframe = document.querySelector("#save-iframe")
@@ -55,6 +54,10 @@ if (params.code) {
 
 			iframe.contentWindow.postMessage(token_message, '*');
 		}
+		
+		navigateTo({
+			path: '/', 
+		})
 	}
 } else if (params.access_token) {
 	console.log('chay vao day roi')

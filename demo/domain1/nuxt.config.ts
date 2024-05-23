@@ -13,7 +13,7 @@ export default defineNuxtConfig({
       CLIENT_ID: process.env.CLIENT_ID,
       CLIENT_SECRET: process.env.CLIENT_SECRET,
       AUTH_SCOPES: process.env.AUTH_SCOPES,
-      TOKEN_SCOPES: process.env.TOKEN_SCOPES
+      RESOURCE_ENDPOINT: process.env.RESOURCE_ENDPOINT
     }
   },
   devServer: {

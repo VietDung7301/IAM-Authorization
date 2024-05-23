@@ -8,7 +8,7 @@ const access_token = useCookie('access_token', {
 	watch: true
 })
 
-const { data, error } = await useFetch('http://localhost:8004/api/access_resource', 
+const { data, error } = await useFetch(config.public.RESOURCE_ENDPOINT, 
 	{
 		onRequest({ request, options }) {
 			options.method = 'POST',
@@ -19,11 +19,14 @@ const { data, error } = await useFetch('http://localhost:8004/api/access_resourc
 			options.body = new URLSearchParams({
 								method: 'GET',
                                 url: 'http://localhost:8005/students',
-                                'Content-Type': 'application/json',
+                                content_type: 'application/json',
 							})
 		},
 		onResponseError({ request, response, options }) {
-			console.log('error roiiii')
+			console.log('error roiiii: ', response)
+		},
+		onResponse({ request, response, options }) {
+			console.log('Resource response: ', response._data.data)
 		},
 	})
 </script>

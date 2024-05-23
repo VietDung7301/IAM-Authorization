@@ -83,6 +83,7 @@ func accessResource(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 
+	fmt.Printf("proceed request\n")
 	// var claims jwt.MapClaims
 	data := RequestBody{
 		Method:       r.FormValue("method"),

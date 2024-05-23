@@ -27,6 +27,7 @@ type MarkedUserData struct {
 }
 
 func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
+	fmt.Printf("ip geo mdw in\n")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("Authorization")
 		if authorization == "" {
@@ -42,6 +43,7 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 		}
 
 		if locationCheck(r.RemoteAddr) {
+			fmt.Printf("ip geo mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
 			// mark user

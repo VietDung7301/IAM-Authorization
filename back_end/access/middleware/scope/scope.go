@@ -25,6 +25,7 @@ type RequestBody struct {
 }
 
 func (smw *ScopeMiddleware) Handler(next http.Handler) http.Handler {
+	fmt.Printf("scope mdw in\n")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("Authorization")
 		if authorization == "" {
@@ -45,6 +46,7 @@ func (smw *ScopeMiddleware) Handler(next http.Handler) http.Handler {
 		}
 
 		if verifyScopes(data.Url, data.Method, claims["scope"]) {
+			fmt.Printf("scope mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
 			responses.ResponseInvalidRequest(w)

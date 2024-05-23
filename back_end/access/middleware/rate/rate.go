@@ -24,6 +24,7 @@ type RateLimitData struct {
 }
 
 func (rmw *RateMiddleware) Handler(next http.Handler) http.Handler {
+	fmt.Printf("rate mdw in\n")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("Authorization")
 		if authorization == "" {
@@ -39,6 +40,7 @@ func (rmw *RateMiddleware) Handler(next http.Handler) http.Handler {
 		}
 
 		if rateLimit(claims["client_id"].(string), rmw.RedisClient) {
+			fmt.Printf("rate mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
 			responses.ResponseInvalidRequest(w)

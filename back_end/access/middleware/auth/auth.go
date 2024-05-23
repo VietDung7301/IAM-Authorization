@@ -18,6 +18,7 @@ type AuthMiddleware struct {
 }
 
 func (amw *AuthMiddleware) Handler(next http.Handler) http.Handler {
+	fmt.Printf("auth middleware in\n")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var claims jwt.MapClaims
 		authorization := r.Header.Get("Authorization")
@@ -31,6 +32,7 @@ func (amw *AuthMiddleware) Handler(next http.Handler) http.Handler {
 				responses.ResponseUnauthenticate(w)
 				return
 			} else {
+				fmt.Printf("auth middleware pass\n")
 				next.ServeHTTP(w, r)
 			}
 		} else {

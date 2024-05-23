@@ -14,7 +14,7 @@ const { data, error } = await useFetch(config.public.RESOURCE_ENDPOINT,
 			options.method = 'POST',
 			options.headers = {
                 ...options.headers,
-                Authorization: `Bearer ${access_token}`
+                Authorization: `Bearer ${access_token.value}`
             }
 			options.body = new URLSearchParams({
 								method: 'GET',

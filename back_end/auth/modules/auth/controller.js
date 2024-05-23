@@ -137,7 +137,7 @@ exports.tokenGrant = async (req, res) => {
         // create id token jwt payload
         if (dataFromCode.scope != undefined && dataFromCode.scope.includes("openid")) {
             // call to identity module to get user
-            const user = await getUser(dataFromCode?.user_id)
+            const user = await getUser(dataFromCode.user_id)
 
             if (user) {
                 // id token claims

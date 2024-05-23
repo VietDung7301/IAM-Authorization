@@ -1,6 +1,6 @@
 <template>
-	<iframe id="save-iframe" src="http://localhost:3000/login/save_token" title="iam"></iframe>
-	<iframe id="get-iframe" src="http://localhost:3000/login/send_token" title="iam"></iframe>
+	<iframe id="save-iframe" src={{ SAVE_TOKEN_ENDPOINT }} title="iam"></iframe>
+	<iframe id="get-iframe" src={{ SAVE_TOKEN_ENDPOINT }} title="iam"></iframe>
 </template>
 <script setup>
 const config = useRuntimeConfig()
@@ -12,6 +12,8 @@ let refresh_token = useCookie('refresh_token', {
 	default: () => {},
 	watch: true
 })
+let SAVE_TOKEN_ENDPOINT = config.public.SAVE_TOKEN_ENDPOINT;
+let GET_TOKEN_ENDPOINT = config.public.GET_TOKEN_ENDPOINT;
 
 const params = useRoute().query
 console.log('code', params.code)

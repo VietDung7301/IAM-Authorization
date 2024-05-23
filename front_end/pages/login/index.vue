@@ -103,12 +103,12 @@ const submitForm = async () => {
 							})
 		},
 		onResponse({ request, response, options }) {
-			console.log('response ne: ', response)
+			console.log('response ne: ', response._data)
 			if (response.status == 200) {
 				navigateTo({
 					path: params.redirect_uri, 
 					query: {
-						code: response._data.code
+						code: response._data.data.code
 					}
 				}, {
 					external: true

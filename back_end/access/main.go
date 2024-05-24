@@ -54,14 +54,14 @@ func main() {
 		RedisClient: redisClient,
 	}
 
+	// use CORS middleware
+	r.Use(mux.CORSMethodMiddleware(r))
+
 	// use middleware
 	r.Use(amw.Handler)
 	r.Use(rmw.Handler)
 	r.Use(igmw.Handler)
 	r.Use(smw.Handler)
-
-	// use CORS middleware
-	r.Use(mux.CORSMethodMiddleware(r))
 
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
 

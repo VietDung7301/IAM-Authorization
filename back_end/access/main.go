@@ -77,9 +77,9 @@ func accessResource(w http.ResponseWriter, r *http.Request) {
 	// set required headers
 	// Set CORS
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == http.MethodOptions {
-		return
-	}
+	// if r.Method == http.MethodOptions {
+	// 	return
+	// }
 
 	w.Header().Add("Content-Type", "application/json")
 

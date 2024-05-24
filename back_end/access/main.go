@@ -63,7 +63,11 @@ func main() {
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
 	r.HandleFunc("/api/access_resource", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		// w.Header().Set("Access-Control-Max-Age", "86400")
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Max-Age", "3600")
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}).Methods(http.MethodOptions)
 
 	// use CORS middleware
@@ -80,7 +84,7 @@ func main() {
 func accessResource(w http.ResponseWriter, r *http.Request) {
 	// set required headers
 	// Set CORS
-	// w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// if r.Method == http.MethodOptions {
 	// 	return
 	// }

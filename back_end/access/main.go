@@ -61,6 +61,10 @@ func main() {
 	r.Use(smw.Handler)
 
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
+	r.HandleFunc("/api/access_resource", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		// w.Header().Set("Access-Control-Max-Age", "86400")
+	}).Methods(http.MethodOptions)
 
 	// use CORS middleware
 	r.Use(mux.CORSMethodMiddleware(r))
@@ -76,7 +80,7 @@ func main() {
 func accessResource(w http.ResponseWriter, r *http.Request) {
 	// set required headers
 	// Set CORS
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
 	// if r.Method == http.MethodOptions {
 	// 	return
 	// }

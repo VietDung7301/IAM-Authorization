@@ -63,7 +63,7 @@ func main() {
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
 
 	// use CORS middleware
-	r.Use(mux.CORSMethodMiddleware(r))
+	// r.Use(mux.CORSMethodMiddleware(r))
 
 	err := godotenv.Load()
 	if err != nil {
@@ -78,9 +78,9 @@ func accessResource(w http.ResponseWriter, r *http.Request) {
 	// Set CORS
 	if r.Method == http.MethodOptions {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		// w.Header().Set("Access-Control-Allow-Methods", "POST")
-		// w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		// w.Header().Set("Access-Control-Max-Age", "3600")
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Max-Age", "3600")
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}

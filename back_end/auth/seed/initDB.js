@@ -68,13 +68,21 @@ const initDB = async () => {
     console.log('insert data')
     await sequelize.models.Client.bulkCreate([
         {
-            id: '123',
-            client_secret: '123',
-            redirect_uri: 'www.google.com',
+            id: '4321',
+            client_secret: '4321',
+            redirect_uri: 'http://localhost:3001/login/callback',
             client_type: 1,
-            name: 'web client',
-            homepage_url: 'www.google.com',
+            name: 'demo client 1',
+            homepage_url: 'http://localhost:3001',
         },
+        {
+            id: '1234',
+            client_secret: '1234',
+            redirect_uri: 'https://iam-demo-1.vercel.app/login/callback',
+            client_type: 1,
+            name: 'client 1',
+            homepage_url: 'https://iam-demo-1.vercel.app',
+        }
     ])
 
     // systemDB.close();

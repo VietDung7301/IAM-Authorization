@@ -69,7 +69,7 @@ const initDB = async () => {
     await sequelize.models.Role.bulkCreate([
         {
             id: '123',
-            title: 'test role',
+            title: 'role1',
             active: 1,
             Scopes: [
                 {
@@ -86,7 +86,7 @@ const initDB = async () => {
     await sequelize.models.Permission.bulkCreate([
         {
             id: '123',
-            title: 'test permission',
+            title: 'permission1',
             active: 1,
             accessible_url: 'www.google.com',
             method: 'GET',

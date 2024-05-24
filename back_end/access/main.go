@@ -54,9 +54,6 @@ func main() {
 		RedisClient: redisClient,
 	}
 
-	// use CORS middleware
-	r.Use(mux.CORSMethodMiddleware(r))
-
 	// use middleware
 	r.Use(amw.Handler)
 	r.Use(rmw.Handler)
@@ -64,6 +61,9 @@ func main() {
 	r.Use(smw.Handler)
 
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
+
+	// use CORS middleware
+	r.Use(mux.CORSMethodMiddleware(r))
 
 	err := godotenv.Load()
 	if err != nil {

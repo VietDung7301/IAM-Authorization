@@ -36,7 +36,7 @@ func (amw *AuthMiddleware) Handler(next http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 			}
 		} else {
-			responses.ResponseInvalidRequest(w)
+			responses.ResponseUnauthenticate(w)
 			return
 		}
 	})

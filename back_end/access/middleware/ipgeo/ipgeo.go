@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
@@ -46,10 +47,27 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 			fmt.Printf("ip geo mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
-			// mark user
+			var markedUserData MarkedUserData
 			ctx := context.Background()
 			redisKey := fmt.Sprintf("marked_user@%s", claims["sub"].(string))
-			markedUserData := MarkedUserData{
+
+			if igmw.RedisClient.Exists(ctx, redisKey).Val() != 0 {
+				val, err := igmw.RedisClient.Get(ctx, redisKey).Result()
+				if err != nil {
+					fmt.Printf("Ko lay duoc marked user\n")
+					responses.ResponseGeneralError(w, "internal server err")
+					return
+				}
+				json.Unmarshal([]byte(val), &markedUserData)
+				if markedUserData.Is_checked == 1 && (markedUserData.Checked_at+600) > time.Now().Unix() {
+					fmt.Printf("ip geo mdw out\n")
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
+			// mark user
+			markedUserData = MarkedUserData{
 				Is_checked:  0,
 				Checked_at:  0,
 				Last_2FA_at: "",
@@ -88,6 +106,8 @@ func locationCheck(ipAddress string) bool {
 	apiKey := os.Getenv("IP_GEO_API_KEY")
 	apiUrl := os.Getenv("IP_GEO_URL")
 	ipGeoApi := fmt.Sprintf("%s?apiKey=%s&ip=%s", apiUrl, apiKey, ipAddress)
+	fmt.Printf("ipgeo api: %s\n", ipGeoApi)
+
 	req, err := http.NewRequest(http.MethodGet, ipGeoApi, nil)
 	if err != nil {
 		fmt.Printf("ko tao dc req\n")

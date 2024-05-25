@@ -11,6 +11,7 @@ import (
 	"access/helpers/redisconn"
 	"access/helpers/responses"
 	"access/middleware/auth"
+	"access/middleware/cors"
 	"access/middleware/ipgeo"
 	"access/middleware/rate"
 	"access/middleware/scope"
@@ -55,6 +56,7 @@ func main() {
 	}
 
 	// use middleware
+	r.Use(cors.Handler)
 	r.Use(amw.Handler)
 	r.Use(rmw.Handler)
 	r.Use(igmw.Handler)
@@ -76,20 +78,18 @@ func main() {
 func accessResource(w http.ResponseWriter, r *http.Request) {
 	// set required headers
 	// Set CORS
-	if r.Method == http.MethodOptions {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		w.Header().Set("Access-Control-Max-Age", "3600")
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	// Set CORS headers for the main request.
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// if r.Method == http.MethodOptions {
+	// 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// 	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS")
+	// 	w.Header().Set("Access-Control-Max-Age", "3600")
+	// 	w.WriteHeader(http.StatusNoContent)
+	// 	return
+	// }
+	// // Set CORS headers for the main request.
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	w.Header().Add("Content-Type", "application/json")
 
-	fmt.Printf("proceed request\n")
 	// var claims jwt.MapClaims
 	data := RequestBody{
 		Method:       r.FormValue("method"),

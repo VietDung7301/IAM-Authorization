@@ -102,6 +102,9 @@ func locationCheck(ipAddress string) bool {
 
 	if response.StatusCode != 200 {
 		fmt.Printf("status code: %d\n", response.StatusCode)
+		errLogByte, _ := io.ReadAll(response.Body)
+		errLog := string(errLogByte)
+		fmt.Printf("%s\n", errLog)
 		return false
 	}
 	defer response.Body.Close()

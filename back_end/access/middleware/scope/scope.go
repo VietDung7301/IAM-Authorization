@@ -66,7 +66,7 @@ func verifyScopes(url_string string, method string, scopes interface{}) bool {
 	body.Set("method", method)
 	body.Set("scopes", scopes.(string))
 
-	roleUrl := os.Getenv("ROLE_URL")
+	roleUrl := fmt.Sprintf("%s/api/permission/check", os.Getenv("ROLE_URL"))
 	encodedBody := body.Encode()
 	req, err := http.NewRequest(http.MethodPost, roleUrl, strings.NewReader(encodedBody))
 	if err != nil {

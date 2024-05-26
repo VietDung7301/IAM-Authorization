@@ -88,7 +88,7 @@ const initDB = async () => {
             id: '123',
             title: 'permission1',
             active: 1,
-            accessible_url: 'www.google.com',
+            accessible_url: 'https://www.google.com',
             method: 'GET',
             ScopeId: '123',
         },

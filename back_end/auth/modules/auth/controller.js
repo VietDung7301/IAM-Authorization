@@ -291,11 +291,10 @@ exports.authenticateOtp = async (req, res) => {
     const data = req.body
     const user_id = data.user_id
     const otp = data.otp
-    const fingerprint = data.fingerprint
+    const fingerprint = data?.fingerprint
 
     if (!user_id || user_id == '' ||
-        !otp || otp == '' ||
-        !fingerprint || fingerprint == '' ) {
+        !otp || otp == '') {
         return responseTrait.ResponseInvalid(res)
     }
 

@@ -59,7 +59,8 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 					return
 				}
 				json.Unmarshal([]byte(val), &markedUserData)
-				if markedUserData.Is_checked == 1 && (markedUserData.Checked_at+600) > time.Now().Unix() {
+				// nên set valid time ở env | default = 1 day
+				if markedUserData.Is_checked == 1 && (markedUserData.Checked_at+86400) > time.Now().Unix() {
 					fmt.Printf("ip geo mdw out\n")
 					next.ServeHTTP(w, r)
 					return

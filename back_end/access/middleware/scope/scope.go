@@ -49,7 +49,7 @@ func (smw *ScopeMiddleware) Handler(next http.Handler) http.Handler {
 			fmt.Printf("scope mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
-			responses.ResponseInvalidRequest(w)
+			responses.Response(w, http.StatusForbidden, "url is not in scope!", nil)
 			return
 		}
 	})

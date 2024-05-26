@@ -29,7 +29,7 @@ func (amw *AuthMiddleware) Handler(next http.Handler) http.Handler {
 			claims = verifyAccessToken(token, amw.RedisClient)
 
 			if claims == nil {
-				responses.ResponseUnauthenticate(w)
+				responses.Response(w, http.StatusUnauthorized, "token expired!", nil)
 				return
 			} else {
 				fmt.Printf("auth middleware pass\n")

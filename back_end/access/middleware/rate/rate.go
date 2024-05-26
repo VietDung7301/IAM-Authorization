@@ -43,7 +43,7 @@ func (rmw *RateMiddleware) Handler(next http.Handler) http.Handler {
 			fmt.Printf("rate mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
-			responses.ResponseInvalidRequest(w)
+			responses.Response(w, http.StatusBadRequest, "rate limited!", nil)
 			return
 		}
 	})

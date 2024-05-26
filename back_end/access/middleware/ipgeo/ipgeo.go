@@ -97,7 +97,7 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 				fmt.Printf("%s\n", err.Error())
 			}
 
-			responses.ResponseInvalidRequest(w)
+			responses.Response(w, http.StatusBadRequest, "location invalid!", nil)
 			return
 		}
 	})

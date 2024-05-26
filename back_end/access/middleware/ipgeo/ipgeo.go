@@ -43,7 +43,8 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 			return
 		}
 
-		if locationCheck(r.RemoteAddr) {
+		fmt.Printf("req ip addr: %s\n", r.Header.Get("X-FORWARDED-FOR"))
+		if locationCheck(r.Header.Get("X-FORWARDED-FOR")) {
 			fmt.Printf("ip geo mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
@@ -97,7 +98,8 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 				fmt.Printf("%s\n", err.Error())
 			}
 
-			responses.Response(w, http.StatusBadRequest, "location invalid!", nil)
+			// responses.Response(w, http.StatusBadRequest, "location invalid!", nil)
+			responses.Response(w, http.StatusBadRequest, r.Header.Get("X-FORWARDED-FOR"), nil)
 			return
 		}
 	})

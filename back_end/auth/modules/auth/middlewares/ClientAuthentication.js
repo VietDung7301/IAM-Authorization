@@ -1,5 +1,6 @@
 const responseTrait = require('../../../traits/responseTrait')
 const clientService = require('../services/ClientService')
+const bcrypt = require('bcrypt')
 
 exports.Handle = async (req, res, next) => {
     console.log('client authentication')
@@ -22,16 +23,18 @@ exports.Handle = async (req, res, next) => {
 }
 
 const ClientValidation = async (client_id, client_secret) => {
-    // authenticate client
-    // const hash = Crypto.SHA256(client_secret)
-    // const hashed_secret = hash.toString(Crypto.enc.Hex)
+    try {
+        const config = {
+            id: client_id,
+        }
+        const client = await clientService.getClient(config)
+        if (!await bcrypt.compare(client_secret, client.client_secret)) {
+            return false
+        }
 
-    const config = {
-        id: client_id,
-        client_secret: client_secret
+        return client
+    } catch (error) {
+        console.log(error)
+        return false
     }
-
-    const client = await clientService.getClient(config)
-    
-    return client
 }

@@ -66,15 +66,15 @@ const initDB = async () => {
     console.log('insert data')
     await sequelize.models.User.bulkCreate([
         {
-            id: '123',
+            id: '1',
             role_id: '123',
-            username: 'test',
-            password: 'test',
-            name: 'test',
-            email: 'test@gmail.com',
+            username: 'dung.hv190092@sis.hust.edu.vn',
+            password: '123456',
+            name: 'Dung',
+            email: 'dung.hv190092@sis.hust.edu.vn',
             email_verified: 1,
             birthdate: new Date(),
-            phone_number: '0987654321',
+            phone_number: '0123456789',
             phone_number_verified: 1,
         },
     ])

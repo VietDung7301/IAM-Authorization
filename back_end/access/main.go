@@ -11,6 +11,7 @@ import (
 	"access/helpers/redisconn"
 	"access/helpers/responses"
 	"access/middleware/auth"
+	"access/middleware/cors"
 	"access/middleware/ipgeo"
 	"access/middleware/rate"
 	"access/middleware/scope"
@@ -55,13 +56,11 @@ func main() {
 	}
 
 	// use middleware
+	r.Use(cors.Handler)
 	r.Use(amw.Handler)
 	r.Use(rmw.Handler)
 	r.Use(igmw.Handler)
 	r.Use(smw.Handler)
-
-	// use CORS middleware
-	r.Use(mux.CORSMethodMiddleware(r))
 
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
 
@@ -75,12 +74,6 @@ func main() {
 
 func accessResource(w http.ResponseWriter, r *http.Request) {
 	// set required headers
-	// Set CORS
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == http.MethodOptions {
-		return
-	}
-
 	w.Header().Add("Content-Type", "application/json")
 
 	// var claims jwt.MapClaims

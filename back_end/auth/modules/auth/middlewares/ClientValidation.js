@@ -6,11 +6,11 @@ exports.Handle = async (req, res, next) => {
     const data = req.body
     const client = await clientService.getClient({id: data.client_id})
     if (!client) 
-        return responseTrait.ResponseInvalid(res)
+        return responseTrait.Response(res, 400, "invalid client!", null)
     
     const redirect_uri_arr = client.redirect_uri.split(',')
     if (!redirect_uri_arr.includes(data.redirect_uri))
-        return responseTrait.ResponseInvalid(res)
+        return responseTrait.Response(res, 400, "invalid client!", null)
     
     next()
 }

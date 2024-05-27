@@ -25,6 +25,7 @@ type RequestBody struct {
 }
 
 func (smw *ScopeMiddleware) Handler(next http.Handler) http.Handler {
+	fmt.Printf("scope mdw in\n")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("Authorization")
 		if authorization == "" {
@@ -45,9 +46,10 @@ func (smw *ScopeMiddleware) Handler(next http.Handler) http.Handler {
 		}
 
 		if verifyScopes(data.Url, data.Method, claims["scope"]) {
+			fmt.Printf("scope mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
-			responses.ResponseInvalidRequest(w)
+			responses.Response(w, http.StatusForbidden, "url is not in scope!", nil)
 			return
 		}
 	})
@@ -64,7 +66,7 @@ func verifyScopes(url_string string, method string, scopes interface{}) bool {
 	body.Set("method", method)
 	body.Set("scopes", scopes.(string))
 
-	roleUrl := os.Getenv("ROLE_URL")
+	roleUrl := fmt.Sprintf("%s/api/permission/check", os.Getenv("ROLE_URL"))
 	encodedBody := body.Encode()
 	req, err := http.NewRequest(http.MethodPost, roleUrl, strings.NewReader(encodedBody))
 	if err != nil {

@@ -18,6 +18,7 @@ type AuthMiddleware struct {
 }
 
 func (amw *AuthMiddleware) Handler(next http.Handler) http.Handler {
+	fmt.Printf("auth middleware in\n")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var claims jwt.MapClaims
 		authorization := r.Header.Get("Authorization")
@@ -28,13 +29,14 @@ func (amw *AuthMiddleware) Handler(next http.Handler) http.Handler {
 			claims = verifyAccessToken(token, amw.RedisClient)
 
 			if claims == nil {
-				responses.ResponseUnauthenticate(w)
+				responses.Response(w, http.StatusUnauthorized, "token expired!", nil)
 				return
 			} else {
+				fmt.Printf("auth middleware pass\n")
 				next.ServeHTTP(w, r)
 			}
 		} else {
-			responses.ResponseInvalidRequest(w)
+			responses.ResponseUnauthenticate(w)
 			return
 		}
 	})

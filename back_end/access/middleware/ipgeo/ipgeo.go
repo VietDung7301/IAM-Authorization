@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
@@ -27,6 +28,7 @@ type MarkedUserData struct {
 }
 
 func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
+	fmt.Printf("ip geo mdw in\n")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authorization := r.Header.Get("Authorization")
 		if authorization == "" {
@@ -41,13 +43,35 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 			return
 		}
 
-		if locationCheck(r.RemoteAddr) {
+		ips := strings.Split(r.Header.Get("X-FORWARDED-FOR"), ", ")
+		fmt.Printf("req ip addr: %s\n", ips[0])
+
+		if locationCheck(ips[0]) {
+			fmt.Printf("ip geo mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
-			// mark user
+			var markedUserData MarkedUserData
 			ctx := context.Background()
 			redisKey := fmt.Sprintf("marked_user@%s", claims["sub"].(string))
-			markedUserData := MarkedUserData{
+
+			if igmw.RedisClient.Exists(ctx, redisKey).Val() != 0 {
+				val, err := igmw.RedisClient.Get(ctx, redisKey).Result()
+				if err != nil {
+					fmt.Printf("Ko lay duoc marked user\n")
+					responses.ResponseGeneralError(w, "internal server err")
+					return
+				}
+				json.Unmarshal([]byte(val), &markedUserData)
+				// nên set valid time ở env | default = 1 day
+				if markedUserData.Is_checked == 1 && (markedUserData.Checked_at+86400) > time.Now().Unix() {
+					fmt.Printf("ip geo mdw out\n")
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
+			// mark user
+			markedUserData = MarkedUserData{
 				Is_checked:  0,
 				Checked_at:  0,
 				Last_2FA_at: "",
@@ -70,7 +94,14 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 				fmt.Printf("%s\n", err.Error())
 			}
 
-			responses.ResponseInvalidRequest(w)
+			redisKey = fmt.Sprintf("%s@%sRefreshToken", claims["client_id"].(string), claims["sub"].(string))
+			err = igmw.RedisClient.Del(ctx, redisKey).Err()
+			if err != nil {
+				fmt.Printf("%s\n", err.Error())
+			}
+
+			// responses.Response(w, http.StatusBadRequest, "location invalid!", nil)
+			responses.Response(w, http.StatusBadRequest, ips[0], nil)
 			return
 		}
 	})
@@ -86,6 +117,8 @@ func locationCheck(ipAddress string) bool {
 	apiKey := os.Getenv("IP_GEO_API_KEY")
 	apiUrl := os.Getenv("IP_GEO_URL")
 	ipGeoApi := fmt.Sprintf("%s?apiKey=%s&ip=%s", apiUrl, apiKey, ipAddress)
+	fmt.Printf("ipgeo api: %s\n", ipGeoApi)
+
 	req, err := http.NewRequest(http.MethodGet, ipGeoApi, nil)
 	if err != nil {
 		fmt.Printf("ko tao dc req\n")
@@ -100,6 +133,9 @@ func locationCheck(ipAddress string) bool {
 
 	if response.StatusCode != 200 {
 		fmt.Printf("status code: %d\n", response.StatusCode)
+		errLogByte, _ := io.ReadAll(response.Body)
+		errLog := string(errLogByte)
+		fmt.Printf("%s\n", errLog)
 		return false
 	}
 	defer response.Body.Close()

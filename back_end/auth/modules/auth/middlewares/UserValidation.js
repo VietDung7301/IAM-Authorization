@@ -6,11 +6,11 @@ exports.Handle = async (req, res, next) => {
     const data = req.body
 
     if (!data.username ||!data.password)
-        return responseTrait.ResponseUnauthenticate(res)
+        return responseTrait.Response(res, 401, "unauthorized user!", null)
 
     const user_id = await UserValidation(data.username, data.password)
     if (!user_id)
-        return responseTrait.ResponseUnauthenticate(res)
+        return responseTrait.Response(res, 401, "unauthorized user!", null)
 
     req.body.user_id = user_id
     next()

@@ -11,7 +11,9 @@ export default defineNuxtConfig({
       OAUTH_RESPONSE_TYPE: 'code',
       REDIRECT_URI: process.env.LOGIN_CALLBACK,
       CLIENT_ID: process.env.CLIENT_ID,
-      CLIENT_SECRET: process.env.CLIENT_SECRET
+      CLIENT_SECRET: process.env.CLIENT_SECRET,
+      AUTH_SCOPES: process.env.AUTH_SCOPES,
+      RESOURCE_ENDPOINT: process.env.RESOURCE_ENDPOINT
     }
   },
   devServer: {

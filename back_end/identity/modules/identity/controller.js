@@ -3,6 +3,7 @@ const FingerprintService = require("./services/FingerprintService")
 const OtpService = require("./services/OtpService")
 const randomStr = require("randomstring")
 const responseTrait = require('../../traits/responseTrait')
+const bcrypt = require('bcrypt')
 
 exports.getAll = async (req, res) => {
     return responseTrait.ResponseSuccess(res, {
@@ -82,19 +83,23 @@ exports.deleteUser = async (req, res) => {
 }
 
 exports.authenticateUser = async (req, res) => {
-    const data = req.body
-    const config = {
-        username: data.username,
-        password: data.password,
+    try {
+        const data = req.body
+        const config = {
+            username: data.username,
+        }
+        const user = await UserService.getUser(config)
+        if (!await bcrypt.compare(data.password, user.password))
+            return responseTrait.ResponseNotFound(res)
+
+        delete user.dataValues.password
+        return responseTrait.ResponseSuccess(res, {
+            user:user.dataValues
+        })
+    } catch (error) {
+        console.log(error)
+        return responseTrait.ResponseInternalServer(res)
     }
-    const user = await UserService.getUser(config)
-
-    if (!user)
-        return responseTrait.ResponseNotFound(res)
-
-    return responseTrait.ResponseSuccess(res, {
-        user:user
-    })
 }
 
 exports.authenticateFingerprint = async (req, res) => {

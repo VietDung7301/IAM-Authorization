@@ -1,5 +1,6 @@
 const { Sequelize } = require('sequelize');
 const { models } = require('../models')
+const bcrypt = require('bcrypt')
 require("dotenv").config();
 
 const initModels = (db, models) => {
@@ -69,7 +70,7 @@ const initDB = async () => {
             id: '1',
             role_id: '123',
             username: 'dung.hv190092@sis.hust.edu.vn',
-            password: '123456',
+            password: await bcrypt.hash('123456', 10),
             name: 'Dung',
             email: 'dung.hv190092@sis.hust.edu.vn',
             email_verified: 1,

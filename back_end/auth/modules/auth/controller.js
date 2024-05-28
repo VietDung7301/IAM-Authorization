@@ -137,7 +137,7 @@ exports.tokenGrant = async (req, res) => {
         // create id token jwt payload
         if (dataFromCode.scope != undefined && dataFromCode.scope.includes("openid")) {
             // call to identity module to get user
-            const user = await getUser(data.user_id)
+            const user = await getUser(dataFromCode.user_id)
 
             if (user) {
                 // id token claims
@@ -291,11 +291,10 @@ exports.authenticateOtp = async (req, res) => {
     const data = req.body
     const user_id = data.user_id
     const otp = data.otp
-    const fingerprint = data.fingerprint
+    const fingerprint = data?.fingerprint
 
     if (!user_id || user_id == '' ||
-        !otp || otp == '' ||
-        !fingerprint || fingerprint == '' ) {
+        !otp || otp == '') {
         return responseTrait.ResponseInvalid(res)
     }
 

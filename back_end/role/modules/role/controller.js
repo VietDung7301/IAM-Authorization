@@ -11,22 +11,30 @@ exports.getScopesFromRoleId = async (req, res) => {
 }
 
 exports.checkPermission = async (req, res) => {
-    // data = req.body
+    try {
+        const data = req.body
 
-    if (data.url == null ||
-        data.method == null ||
-        data.scopes == null) {
-            return responseTrait.ResponseInvalid(res)
+        if (data.url == null ||
+            data.method == null ||
+            data.scopes == null) {
+                return responseTrait.ResponseInvalid(res)
+        }
+    
+        const url = new URL(data.url)
+        const scopes = data.scopes.split(' ')
+        const config = {
+            url: url.origin,
+            method: data.method,
+            scopes: scopes
+        }
+    
+        return responseTrait.ResponseSuccess(res, {
+            check: await PermissionService.checkPermission(config)
+        })
+    } catch (error) {
+        console.log(error)
+        return responseTrait.ResponseSuccess(res, {
+            check: false
+        })
     }
-
-    const scopes = data.scopes.split(' ')
-    const config = {
-        url: data.url,
-        method: data.method,
-        scopes: scopes
-    }
-
-    return responseTrait.ResponseSuccess(res, {
-        check: await PermissionService.checkPermission(config)
-    })
 }

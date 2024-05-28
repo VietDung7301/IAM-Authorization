@@ -6,9 +6,6 @@ exports.getUser = async (config) => {
     try {
         const user = await DB_CONNECTION.models.User.findOne({
             where: config,
-            attributes: {
-                exclude: ['password'],
-            }
         })
         if (user == null) {
             return false

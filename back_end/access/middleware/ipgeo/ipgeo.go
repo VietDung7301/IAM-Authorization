@@ -107,7 +107,7 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 		// 	responses.Response(w, http.StatusBadRequest, ips[0], nil)
 		// 	return
 		// }
-		fmt.Print(locationCheckV2(ips[0]))
+		fmt.Printf("location in VN: %t\n", locationCheckV2(ips[0]))
 		next.ServeHTTP(w, r)
 		// return
 	})

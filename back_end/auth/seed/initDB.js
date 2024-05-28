@@ -70,7 +70,7 @@ const initDB = async () => {
     await sequelize.models.Client.bulkCreate([
         {
             id: '4321',
-            client_secret: await bcrypt.hash('4321', 10),
+            client_secret: await bcrypt.hash('4321', parseInt(process.env.SALT_ROUND)),
             redirect_uri: 'http://localhost:3001/login/callback',
             client_type: 1,
             name: 'demo client 1',
@@ -78,7 +78,7 @@ const initDB = async () => {
         },
         {
             id: '1234',
-            client_secret: await bcrypt.hash('1234', 10),
+            client_secret: await bcrypt.hash('1234', parseInt(process.env.SALT_ROUND)),
             redirect_uri: 'https://iam-demo-1.vercel.app/login/callback',
             client_type: 1,
             name: 'client 1',

@@ -11,12 +11,12 @@ import (
 	"access/helpers/redisconn"
 	"access/helpers/responses"
 
-	// "access/middleware/auth"
+	"access/middleware/auth"
 	"access/middleware/cors"
 	"access/middleware/ipgeo"
 
-	// "access/middleware/rate"
-	// "access/middleware/scope"
+	"access/middleware/rate"
+	"access/middleware/scope"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -44,25 +44,25 @@ func main() {
 	r := mux.NewRouter()
 
 	// init middleware
-	// amw := auth.AuthMiddleware{
-	// 	RedisClient: redisClient,
-	// }
-	// rmw := rate.RateMiddleware{
-	// 	RedisClient: redisClient,
-	// }
-	// smw := scope.ScopeMiddleware{
-	// 	//
-	// }
+	amw := auth.AuthMiddleware{
+		RedisClient: redisClient,
+	}
+	rmw := rate.RateMiddleware{
+		RedisClient: redisClient,
+	}
+	smw := scope.ScopeMiddleware{
+		//
+	}
 	igmw := ipgeo.IpGeoMiddleware{
 		RedisClient: redisClient,
 	}
 
 	// use middleware
 	r.Use(cors.Handler)
-	// r.Use(amw.Handler)
-	// r.Use(rmw.Handler)
+	r.Use(amw.Handler)
+	r.Use(rmw.Handler)
 	r.Use(igmw.Handler)
-	// r.Use(smw.Handler)
+	r.Use(smw.Handler)
 
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
 

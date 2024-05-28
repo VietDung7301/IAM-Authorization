@@ -32,11 +32,11 @@ type RequestBody struct {
 }
 
 func main() {
-	/*
-	* rate limit based on IP
-	* Finger print
-	* locale mangagement
-	 */
+	// Load env
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("Error loading .env file - main\n")
+	}
 
 	ctx := context.TODO()
 	redisClient = redisconn.ConnectRedis(ctx)
@@ -66,10 +66,6 @@ func main() {
 
 	r.HandleFunc("/api/access_resource", accessResource).Methods("POST", http.MethodOptions)
 
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Printf("Error loading .env file - main\n")
-	}
 	port := fmt.Sprintf(":%s", os.Getenv("PORT"))
 	http.ListenAndServe(port, r)
 }

@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-c-%-p0+6tdxf0a9ls-vh(g#sysc^en(n4szggij2j$rt3+&9i)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG_MODE").lower() in ('true', 'yes', '1')
 
 ALLOWED_HOSTS = []
 
@@ -43,7 +43,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'authorization.apps.UserManagementConfig'
+    'authorization.apps.AuthorizationConfig',
+    'identity.apps.IdentityConfig',
+    'role.apps.RoleConfig'
 ]
 
 MIDDLEWARE = [
@@ -105,7 +107,7 @@ DATABASES = {
         'PASSWORD': os.getenv('ROLE_DB_PASSWORD'),
         'HOST': os.getenv('ROLE_DB_HOST'),
         'PORT': os.getenv('ROLE_DB_PORT'),
-    }
+    },
 }
 
 DATABASE_ROUTERS = ['database_routers.router.Router']

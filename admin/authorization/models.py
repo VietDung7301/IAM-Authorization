@@ -8,7 +8,7 @@
 from django.db import models
 
 
-class Clients(models.Model):
+class Client(models.Model):
     id = models.CharField(primary_key=True, max_length=255)
     client_secret = models.CharField(max_length=255)
     redirect_uri = models.TextField()
@@ -18,6 +18,9 @@ class Clients(models.Model):
     description = models.TextField(blank=True, null=True)
     createdat = models.DateTimeField(db_column='createdAt')  # Field name made lowercase.
     updatedat = models.DateTimeField(db_column='updatedAt')  # Field name made lowercase.
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         managed = False

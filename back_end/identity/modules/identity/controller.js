@@ -31,6 +31,7 @@ exports.getUser = async (req, res) => {
         }
     }
 
+    if (user.dataValues.password) delete user.dataValues.password
     return responseTrait.ResponseSuccess(res, {
         user:user
     })
@@ -89,6 +90,9 @@ exports.authenticateUser = async (req, res) => {
             username: data.username,
         }
         const user = await UserService.getUser(config)
+        if (!user) {
+            return responseTrait.ResponseNotFound(res)
+        }
         if (!await bcrypt.compare(data.password, user.password))
             return responseTrait.ResponseNotFound(res)
 
@@ -98,7 +102,7 @@ exports.authenticateUser = async (req, res) => {
         })
     } catch (error) {
         console.log(error)
-        return responseTrait.ResponseInternalServer(res)
+        return responseTrait.ResponseNotFound(res)
     }
 }
 

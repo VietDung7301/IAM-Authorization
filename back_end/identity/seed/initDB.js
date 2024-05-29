@@ -70,7 +70,7 @@ const initDB = async () => {
             id: '1',
             role_id: '123',
             username: 'dung.hv190092@sis.hust.edu.vn',
-            password: await bcrypt.hash('123456', 10),
+            password: await bcrypt.hash('123456', parseInt(process.env.SALT_ROUND)),
             name: 'Dung',
             email: 'dung.hv190092@sis.hust.edu.vn',
             email_verified: 1,

@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,27 +52,19 @@ func (rmw *RateMiddleware) Handler(next http.Handler) http.Handler {
 }
 
 func rateLimit(client_id string, redisClient *redis.Client) bool {
-	/*
-	* get rateLimitData
-	*
-	* if (window_edge + time_unit) <= cur_time() {
-	* 	prev_req_count = cur_req_count;
-	* 	cur_req_count = 0
-	* }
-	*
-	* cur_req_count++
-	*
-	* calculate ec
-	* if ec > capacity:
-	* 	drop req
-	*
-	* forward req
-	 */
-
 	// 50 req/min
-	const time_unit = 60
-	const capacity = 50
+	defaultTimeUnit, err := strconv.Atoi(os.Getenv("RATE_TIME_UNIT"))
+	if err != nil {
+		defaultTimeUnit = 60
+	}
+	defaultCapacity, err := strconv.Atoi(os.Getenv("RATE_CAPACITY"))
+	if err != nil {
+		defaultCapacity = 50
+	}
+	var timeUnit, capacity int64
 	var rateLimitData RateLimitData
+	timeUnit = int64(defaultTimeUnit)
+	capacity = int64(defaultCapacity)
 	check := false
 
 	// get rateLimitData
@@ -80,29 +74,36 @@ func rateLimit(client_id string, redisClient *redis.Client) bool {
 		//get key
 		val, err := redisClient.Get(ctx, redisKey).Result()
 		if err != nil {
+			fmt.Printf("%s\n", err.Error())
 			return false
 		}
 		json.Unmarshal([]byte(val), &rateLimitData)
 	} else {
 		// init key
 		rateLimitData = RateLimitData{
-			Prev_req_count: capacity,
+			Prev_req_count: 0,
 			Window_edge:    time.Now().Unix(),
 			Cur_req_count:  0,
 		}
 	}
 
 	// update value
-	if (rateLimitData.Window_edge + time_unit) <= time.Now().Unix() {
-		rateLimitData.Prev_req_count = rateLimitData.Cur_req_count
+	if (rateLimitData.Window_edge + timeUnit) <= time.Now().Unix() {
+		if (rateLimitData.Window_edge + 2*timeUnit) <= time.Now().Unix() {
+			rateLimitData.Prev_req_count = 0
+		} else {
+			rateLimitData.Prev_req_count = rateLimitData.Cur_req_count
+		}
 		rateLimitData.Cur_req_count = 0
 		rateLimitData.Window_edge = time.Now().Unix()
 	}
+
+	// increase current count
 	rateLimitData.Cur_req_count++
 
 	// check ec
-	ec := float64(rateLimitData.Prev_req_count)*((float64(time_unit)-(float64(time.Now().Unix())-float64(rateLimitData.Window_edge)))/float64(time_unit)) + float64(rateLimitData.Cur_req_count)
-	if ec < capacity {
+	ec := float64(rateLimitData.Prev_req_count)*((float64(timeUnit)-(float64(time.Now().Unix())-float64(rateLimitData.Window_edge)))/float64(timeUnit)) + float64(rateLimitData.Cur_req_count)
+	if ec < float64(capacity) {
 		check = true
 	}
 

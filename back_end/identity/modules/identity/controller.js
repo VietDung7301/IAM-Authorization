@@ -31,6 +31,7 @@ exports.getUser = async (req, res) => {
         }
     }
 
+    if (user.dataValues.password) delete user.dataValues.password
     return responseTrait.ResponseSuccess(res, {
         user:user
     })

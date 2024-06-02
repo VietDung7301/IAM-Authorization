@@ -41,7 +41,7 @@ func (rmw *RateMiddleware) Handler(next http.Handler) http.Handler {
 			return
 		}
 
-		if rateLimit(claims["client_id"].(string), rmw.RedisClient) {
+		if rateLimit(claims["sub"].(string), rmw.RedisClient) {
 			fmt.Printf("rate mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
@@ -51,7 +51,7 @@ func (rmw *RateMiddleware) Handler(next http.Handler) http.Handler {
 	})
 }
 
-func rateLimit(client_id string, redisClient *redis.Client) bool {
+func rateLimit(user_id string, redisClient *redis.Client) bool {
 	// 50 req/min
 	defaultTimeUnit, err := strconv.Atoi(os.Getenv("RATE_TIME_UNIT"))
 	if err != nil {
@@ -68,7 +68,7 @@ func rateLimit(client_id string, redisClient *redis.Client) bool {
 	check := false
 
 	// get rateLimitData
-	redisKey := client_id
+	redisKey := fmt.Sprintf("%s@ratelimit", user_id)
 	ctx := context.Background()
 	if redisClient.Exists(ctx, redisKey).Val() != 0 {
 		//get key
@@ -113,7 +113,7 @@ func rateLimit(client_id string, redisClient *redis.Client) bool {
 		fmt.Printf("%s\n", err.Error())
 	}
 
-	err = redisClient.Set(ctx, client_id, payload, 0).Err()
+	err = redisClient.Set(ctx, redisKey, payload, 0).Err()
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
 	}

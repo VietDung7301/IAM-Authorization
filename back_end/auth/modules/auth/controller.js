@@ -198,56 +198,6 @@ exports.tokenGrant = async (req, res) => {
     })
 }
 
-// exports.ClientRegistration = async (req, res) => {
-//     const data = req.body
-
-//     if (data.redirect_uri == null ||
-//         data.homepage_url == null ||
-//         data.name == null )
-//         return responseTrait.ResponseInvalid(res)
-    
-//     if (!Array.isArray(data.redirect_uri) || (Array.isArray(data.redirect_uri) && data.redirect_uri.length == 0))
-//         return responseTrait.ResponseInvalid(res)
-    
-//     const client_id = randomstring.generate(20)
-//     const client_secret = randomstring.generate(20)
-//     const hash = Crypto.SHA256(client_secret)
-    
-//     const config = {
-//         id: client_id,
-//         client_secret: hash.toString(Crypto.enc.Hex),
-//         redirect_uri: data.redirect_uri.toString(),
-//         client_type: true,
-//         name: data.name,
-//         homepage_url: data.homepage_url,
-//         description: data.description != null ? data.description : null,
-//     }
-
-//     await clientService.createClient(config)
-
-//     return responseTrait.ResponseSuccess(res, {
-//         client_id: client_id,
-//         client_secret: client_secret
-//     })
-// }
-
-exports.getPublicKey = async (req, res) => {
-    const data = req.query
-
-    if (data.client_id == null || 
-        data.user_id == null)
-        return responseTrait.ResponseInvalid(res)
-
-    const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
-
-    if (!public_key)
-        return responseTrait.ResponseInvalid(res)
-
-    return responseTrait.ResponseSuccess(res, {
-        public_key: public_key
-    })
-}
-
 exports.logout = async (req, res) => {
     const data = req.body
     await tokenService.destroyAccessToken(data.client_id, data.user_id)

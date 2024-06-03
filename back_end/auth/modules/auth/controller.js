@@ -230,7 +230,7 @@ exports.sendOtp = async (req, res) => {
         if (data.status_code != 200) {
             return responseTrait.Response(res, 502, "send otp failed!", null)  
         }
-        return responseTrait.ResponseSuccess(res, null)
+        return responseTrait.ResponseSuccess(res, data.data)
     } catch (error) {
         console.log(error)
         return responseTrait.ResponseInternalServer(res)

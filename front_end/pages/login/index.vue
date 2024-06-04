@@ -13,8 +13,8 @@
 					</h1>
 					<form class="space-y-4 md:space-y-6" @submit.prevent="submitForm">
 						<div>
-							<label for="email" class="block mb-2 text-sm font-medium text-gray-900">Your email</label>
-							<input type="email" name="email" id="email" v-model="formData.email"
+							<label for="username" class="block mb-2 text-sm font-medium text-gray-900">Your username</label>
+							<input name="username" id="username" v-model="formData.username"
 								class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
 								placeholder="name@company.com" required="">
 						</div>
@@ -41,17 +41,26 @@
 							class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
 							Sign in
 						</button>
-						
 					</form>
 				</div>
 			</div>
 		</div>
 	</section>
+	<OTPModal v-show="showOtp" @send-otp-success="redirectToClient" :user_id="userId" :email="email"/>
 </template>
   
 <script setup>
 import { ref } from 'vue'
 import VueJwtDecode from 'vue-jwt-decode'
+import OTPModal from '~/components/OTPModal.vue';
+
+let showOtp = ref(false)
+let userId = ref('')
+let email = ref('')
+
+const config = useRuntimeConfig()
+const AUTH_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/code`
+const REQUEST_OTP_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/otp/send`
 
 // Check if user was logged in
 const params = useRoute().query
@@ -79,25 +88,51 @@ if (access_token.value && access_token.value != null) {
 	})
 }
 
-const config = useRuntimeConfig()
-
-const BASE_URL = `${config.public.AUTH_SERVER}/api/auth/code`
-
 
 const formData = ref({
-	email: '',
+	username: '',
 	password: '',
 	remember: ''
 })
 
+const redirectToClient = () => {
+	console.log('callback to parrent')
+	navigateTo({
+		path: params.redirect_uri, 
+		query: {
+			code: code
+		}
+	}, {
+		external: true
+	})
+}
+
+const requestSendOTP = async (userId) => {
+	await useFetch(REQUEST_OTP_ENDPOINT, {
+		onRequest({ request, options }) {
+			options.method = 'POST',
+			options.headers = {...options.headers, 'Content-Type': 'application/x-www-form-urlencoded'}
+			options.body = new URLSearchParams({
+								user_id: userId
+							})
+		},
+		onResponse({ request, response, options }) {
+			console.log('Request send OTP success')
+		},
+		onRequestError({ request, response, options }) {
+			console.log('Request send OTP error')
+		}
+	})
+}
+
 const submitForm = async () => {
-	const { data, error } = await useFetch(BASE_URL, 
+	const { data, error } = await useFetch(AUTH_ENDPOINT, 
 	{
 		onRequest({ request, options }) {
 			options.method = 'POST',
 			options.headers = {...options.headers, 'Content-Type': 'application/x-www-form-urlencoded'}
 			options.body = new URLSearchParams({
-								username: formData.value.email,
+								username: formData.value.username,
 								password: formData.value.password,
 								...params
 							})
@@ -105,14 +140,13 @@ const submitForm = async () => {
 		onResponse({ request, response, options }) {
 			console.log('response ne: ', response._data)
 			if (response.status == 200) {
-				navigateTo({
-					path: params.redirect_uri, 
-					query: {
-						code: response._data.data.code
-					}
-				}, {
-					external: true
-				})	
+				console.log('response otp', response._data.data.otp)
+				if (response._data.data.otp == true) {
+					requestSendOTP(response._data.data.user_id)
+					userId = response._data.data.user_id
+					showOtp.value = true
+				}
+				else redirectToClient(response._data.data.code)
 			}
 		},
 		onResponseError({ request, response, options }) {
@@ -122,4 +156,3 @@ const submitForm = async () => {
 	
 }
 </script>
-  

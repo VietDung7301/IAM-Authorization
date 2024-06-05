@@ -46,18 +46,24 @@
 			</div>
 		</div>
 	</section>
-	<OTPModal v-show="showOtp" @send-otp-success="redirectToClient" :user_id="userId" :email="email"/>
+	<OTPModal 
+		v-show="showOtp" 
+		@send-otp-success="redirectToClient" 
+		:user_id="userId" 
+		:email="email" 
+		:visitorId="visitorId"/>
 </template>
   
 <script setup>
 import { ref } from 'vue'
-import VueJwtDecode from 'vue-jwt-decode'
 import OTPModal from '~/components/OTPModal.vue';
+import FingerprintJS from '@fingerprintjs/fingerprintjs'
 
 let showOtp = ref(false)
 let userId = ref('')
 let email = ref('')
 let auth_code = ''
+let visitorId = ref('')
 
 const config = useRuntimeConfig()
 const AUTH_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/code`
@@ -96,6 +102,18 @@ const formData = ref({
 	remember: ''
 })
 
+
+
+// Fingerprint
+const fpPromise = FingerprintJS.load()
+
+const getVisitorId = async () => {
+  // Get the visitor identifier when you need it.
+  const fp = await fpPromise
+  const result = await fp.get()
+  return result.visitorId
+}
+
 const redirectToClient = async () => {
 	await navigateTo({
 		path: params.redirect_uri, 
@@ -126,6 +144,7 @@ const requestSendOTP = async (userId) => {
 }
 
 const submitForm = async () => {
+	visitorId = await getVisitorId()
 	const { data, error } = await useFetch(AUTH_ENDPOINT, 
 	{
 		onRequest({ request, options }) {
@@ -134,6 +153,7 @@ const submitForm = async () => {
 			options.body = new URLSearchParams({
 								username: formData.value.username,
 								password: formData.value.password,
+								fingerprint: visitorId,
 								...params
 							})
 		},

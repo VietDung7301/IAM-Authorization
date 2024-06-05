@@ -11,7 +11,7 @@
 			<!-- Navbar -->
 			<div class="md:block">
 				<ul class="flex space-x-8 font-sans">
-					<li><a href="#" class="active border-b-2 border-blue-500 pb-1">Home</a></li>
+					<li><nuxtLink to="/" class="active border-b-2 border-blue-500 pb-1">Home</nuxtLink></li>
 					<li><nuxtLink to="/service" class="">Services</nuxtLink></li>
 					<li><a href="#" class="">Features</a></li>
 					<li><a href="#" class="">FAQ</a></li>
@@ -36,18 +36,6 @@
 	</div>
 </template>
 <script setup>
-const config = useRuntimeConfig()
-const AUTH_SERVER = `${config.public.AUTH_SERVER}/login`
-const handle_login_with_iam = () => {
-	navigateTo({
-		path: AUTH_SERVER, 
-		query: {
-			response_type: config.OAUTH_RESPONSE_TYPE,
-			client_id: config.CLIENT_ID,
-			redirect_uri: window.location.host
-		}
-	}, {
-		external: true
-	})	
-}
+	let route = useRoute().fullPath
+	console.log('route', route)
 </script>

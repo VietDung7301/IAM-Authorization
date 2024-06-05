@@ -24,7 +24,9 @@
 
 
 <script setup>
-	const props = defineProps(['user_id', 'email'])
+import { popScopeId } from 'vue';
+
+	const props = defineProps(['user_id', 'email', 'visitorId'])
 	const emit = defineEmits(['send-otp-success'])
 
 	const config = useRuntimeConfig()
@@ -39,12 +41,17 @@
 				options.headers = {...options.headers, 'Content-Type': 'application/x-www-form-urlencoded'}
 				options.body = new URLSearchParams({
 									otp: otp.value,
-									user_id: props.user_id
+									user_id: props.user_id,
+									visitorId: props.visitorId
 								})
 			},
 			onResponse({ request, response, options }) {
 				console.log('otp_response: ', response._data)
-				emit('send-otp-success')
+				if (response._data.data.check == true) {
+					emit('send-otp-success')
+				} else {
+					console.log('OTP wrong')
+				}
 			},
 			onResponseError({ request, response, options }) {
 				console.log('send_otp error')

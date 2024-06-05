@@ -57,6 +57,7 @@ import OTPModal from '~/components/OTPModal.vue';
 let showOtp = ref(false)
 let userId = ref('')
 let email = ref('')
+let auth_code = ''
 
 const config = useRuntimeConfig()
 const AUTH_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/code`
@@ -95,12 +96,11 @@ const formData = ref({
 	remember: ''
 })
 
-const redirectToClient = () => {
-	console.log('callback to parrent')
-	navigateTo({
+const redirectToClient = async () => {
+	await navigateTo({
 		path: params.redirect_uri, 
 		query: {
-			code: code
+			code: auth_code
 		}
 	}, {
 		external: true
@@ -140,13 +140,14 @@ const submitForm = async () => {
 		onResponse({ request, response, options }) {
 			console.log('response ne: ', response._data)
 			if (response.status == 200) {
+				auth_code = response._data.data.code
 				console.log('response otp', response._data.data.otp)
 				if (response._data.data.otp == true) {
 					requestSendOTP(response._data.data.user_id)
 					userId = response._data.data.user_id
 					showOtp.value = true
 				}
-				else redirectToClient(response._data.data.code)
+				else redirectToClient()
 			}
 		},
 		onResponseError({ request, response, options }) {

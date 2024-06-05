@@ -25,7 +25,7 @@
 
 <script setup>
 	const props = defineProps(['user_id', 'email'])
-	defineEmits(['send-otp-success'])
+	const emit = defineEmits(['send-otp-success'])
 
 	const config = useRuntimeConfig()
 	const OTP_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/otp/authenticate`
@@ -44,7 +44,7 @@
 			},
 			onResponse({ request, response, options }) {
 				console.log('otp_response: ', response._data)
-				$emit('send-otp-success')
+				emit('send-otp-success')
 			},
 			onResponseError({ request, response, options }) {
 				console.log('send_otp error')

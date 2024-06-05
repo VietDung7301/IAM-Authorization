@@ -11,7 +11,7 @@
 			<!-- Navbar -->
 			<div class="md:block">
 				<ul class="flex space-x-8 font-sans">
-					<li><a href="#" class="active border-b-2 border-blue-500 pb-1">Home</a></li>
+					<li><nuxtLink to="/" class="active border-b-2 border-blue-500 pb-1">Home</nuxtLink></li>
 					<li><nuxtLink to="/service" class="">Services</nuxtLink></li>
 					<li><a href="#" class="">Features</a></li>
 					<li><a href="#" class="">FAQ</a></li>
@@ -36,4 +36,6 @@
 	</div>
 </template>
 <script setup>
+	let route = useRoute().fullPath
+	console.log('route', route)
 </script>

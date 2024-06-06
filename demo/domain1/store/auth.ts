@@ -29,11 +29,11 @@ export const useAuthStore = defineStore('auth', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            Authorization: `Bearer ${access_token.value}`
           },
           body: new URLSearchParams ({
             user_id: this.user_id,
-            client_id: client_id
+            client_id: client_id,
+            Authorization: `Bearer ${access_token.value}`
           })
         })
         if (data.value) {

@@ -209,9 +209,15 @@ exports.tokenGrant = async (req, res) => {
 
 exports.logout = async (req, res) => {
     const data = req.body
-    await tokenService.destroyAccessToken(data.client_id, data.user_id)
+    try {
+        await tokenService.destroyAccessToken(data.client_id, data.user_id)
+        await tokenService.destroyRefreshToken(data.client_id, data.user_id)
 
-    return responseTrait.ResponseSuccess(res, null)
+        return responseTrait.ResponseSuccess(res, null)
+    } catch (error) {
+        console.log(error)
+        return responseTrait.ResponseInternalServer(res)
+    }
 }
 
 exports.sendOtp = async (req, res) => {

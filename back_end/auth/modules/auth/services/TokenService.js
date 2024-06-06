@@ -33,7 +33,21 @@ exports.getPublicKey = async (client_id, user_id) => {
 exports.destroyAccessToken = async (client_id, user_id) => {
     try {
         const key = client_id + '@' + user_id + 'AccessToken'
+
         await client.del(key)
+        return true
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
+exports.destroyRefreshToken = async (client_id, user_id) => {
+    try {
+        const key = client_id + '@' + user_id + 'RefreshToken'
+
+        await client.del(key)
+        return true
     } catch (error) {
         console.log(error)
         return false

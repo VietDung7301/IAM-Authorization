@@ -43,7 +43,7 @@
 						</button>
 					</form>
 					<div>
-						Or sign with
+						Or sign in with
 					</div>
 					<div class="flex justify-center">
 						<GoogleSignInButton

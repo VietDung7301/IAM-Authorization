@@ -18,6 +18,7 @@ exports.Handle = async (req, res, next) => {
             const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
             jwt.verify(access_token, public_key)
         } catch (error) {
+            console.log(error)
             return responseTrait.ResponseUnauthenticate(res)
         }
     } else {

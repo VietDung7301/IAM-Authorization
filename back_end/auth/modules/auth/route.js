@@ -4,6 +4,7 @@ const controller = require('./controller');
 const cors = require('cors');
 const codeReqValidation = require('./middlewares/CodeReqValidation')
 const userValidation = require('./middlewares/UserValidation')
+const linkedAccountValidation = require('./middlewares/LinkedAccountValidation')
 const clientValidation = require('./middlewares/ClientValidation')
 const clientAuthentication = require('./middlewares/ClientAuthentication')
 const tokenAuthentication = require('./middlewares/TokenAuthentication')
@@ -25,6 +26,14 @@ router.post('/api/auth/token', [
 // router.post('/api/auth/client', controller.ClientRegistration)
 
 router.post('/api/auth/logout', [cors({origin: ["*"],}), tokenAuthentication.Handle], controller.logout)
+
+router.post('/api/auth/login/linked_account', [
+            cors({origin: [process.env.FE_URL],}),
+            codeReqValidation.Handle, 
+            clientValidation.Handle, 
+            linkedAccountValidation.Handle, 
+            fingerprintCheck.Handle
+        ], controller.authCodeGrant)
 
 //set cors only for frontend
 router.post('/api/auth/otp/send', cors({origin: [process.env.FE_URL],}), controller.sendOtp)

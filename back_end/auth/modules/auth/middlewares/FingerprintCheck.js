@@ -7,18 +7,22 @@ exports.Handle = async (req, res, next) => {
     const data = req.body
     const user_id = data.user_id
     const fingerprint = data.fingerprint
-    
-    // check fingerprint
-    const result = await fingerprintValidation(user_id, fingerprint)
-    if (!result || result.check == undefined || !result.check) {
-        const marked_user = await markedUserService.getMarkedUser(user_id)
-        if (marked_user?.is_checked && marked_user?.last_2FA_at == fingerprint) {
-            if (fingerprint) { 
-                await saveFingerprint(fingerprint, user_id) 
+
+    if (!fingerprint) {
+        await markedUserService.markedUser(user_id)
+    } else {
+        // check fingerprint
+        const result = await fingerprintValidation(user_id, fingerprint)
+        if (!result || result.check == undefined || !result.check) {
+            const marked_user = await markedUserService.getMarkedUser(user_id)
+            if (marked_user?.is_checked && marked_user?.last_2FA_at == fingerprint) {
+                if (fingerprint) { 
+                    await saveFingerprint(fingerprint, user_id) 
+                }
+            } else {
+                // create record
+                await markedUserService.markedUser(user_id)
             }
-        } else {
-            // create record
-            await markedUserService.markedUser(user_id)
         }
     }
     next()

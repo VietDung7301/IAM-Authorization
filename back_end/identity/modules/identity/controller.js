@@ -216,7 +216,7 @@ exports.sendOtp = async (req, res) => {
         while (count < process.env.RESEND_EMAIL_COUNT) {
             if (await OtpService.sendOtp({email: user.email, otp: otp})) {
                 return responseTrait.ResponseSuccess(res, {
-                    otp: otp
+                    email: user.email
                 })
             } else {
                 count++
@@ -225,7 +225,7 @@ exports.sendOtp = async (req, res) => {
         return responseTrait.ResponseGeneralError(res, "cannot send otp")
     }
     return responseTrait.ResponseSuccess(res, {
-        otp: otp
+        email: user.email
     })
 }
 

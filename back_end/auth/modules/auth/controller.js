@@ -76,6 +76,7 @@ exports.authCodeGrant = async (req, res) => {
 
 exports.tokenGrant = async (req, res) => {
     let id_token = ''
+    let id_token_pub_key = ''
     let access_token = ''
     let refresh_token = ''
     let scope = ''
@@ -92,18 +93,19 @@ exports.tokenGrant = async (req, res) => {
         const refresh_token = await tokenService.getRefreshToken(data.client_id, data.user_id)
         
         if (refresh_token != data.refresh_token) {
-            return responseTrait.ResponseInvalid(res)
+            return responseTrait.Response(res, 400, "refresh token invalid!", null)
         }
 
         // verify refresh token bang publicKey
         const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
         try {
             jwt.verify(refresh_token, public_key, function(err, decoded) {
-                id_token = decoded.id_token
+                id_token = decoded.openid.id_token
+                id_token_pub_key = decoded.openid.id_token_pub_key
             });
         } catch (error) {
             console.log(error)
-            return responseTrait.ResponseInvalid(res)
+            return responseTrait.Response(res, 400, "refresh token invalid!", null)
         }
 
         // generate scope
@@ -122,16 +124,16 @@ exports.tokenGrant = async (req, res) => {
         const code = await codeService.getAuthCode(dataFromCode?.client_id, dataFromCode?.user_id)
     
         if (!code)
-            return responseTrait.ResponseInvalid(res)
+            return responseTrait.Response(res, 400, "authorization code not found!", null)
     
         if (code != data.code) {
-            return responseTrait.ResponseInvalid(res)
+            return responseTrait.Response(res, 400, "authorization code invalid!", null)
         } else {
             await codeService.removeAuthCode(dataFromCode.client_id, dataFromCode.user_id)
         }
 
         if (data.redirect_uri != dataFromCode?.redirect_uri) {
-            return responseTrait.ResponseInvalid(res)
+            return responseTrait.Response(res, 400, "redirect url invalid!", null)
         }
         
         // create id token jwt payload
@@ -151,8 +153,9 @@ exports.tokenGrant = async (req, res) => {
                     iat: Math.floor(Date.now() / 1000),
                     user
                 }
-        
-                id_token = helpers.JWT.genToken(id_token_claims)
+                const  keyPair  = helpers.Generator.generateKeyPair()
+                id_token_pub_key = keyPair.publicKey
+                id_token = helpers.JWT.genAccessToken(id_token_claims, keyPair.privateKey)
             }
 
         }
@@ -183,7 +186,10 @@ exports.tokenGrant = async (req, res) => {
     access_token = helpers.JWT.genAccessToken(access_token_claims, privateKey)
     refresh_token = helpers.JWT.genAccessToken({
         string: randomstring.generate(30),
-        id_token: id_token,
+        openid: {
+            id_token: id_token,
+            id_token_pub_key: id_token_pub_key,
+        },
     }, privateKey)
 
     await tokenService.savePublicKey(publicKey, data.client_id, user_id)
@@ -194,7 +200,10 @@ exports.tokenGrant = async (req, res) => {
         token_type: 'Bearer',
         expires_in: process.env.TOKEN_EXP,
         refresh_token: refresh_token,
-        id_token: id_token,
+        openid: {
+            id_token: id_token,
+            id_token_pub_key: id_token_pub_key,
+        },
     })
 }
 
@@ -230,7 +239,7 @@ exports.sendOtp = async (req, res) => {
         if (data.status_code != 200) {
             return responseTrait.Response(res, 502, "send otp failed!", null)  
         }
-        return responseTrait.ResponseSuccess(res, null)
+        return responseTrait.ResponseSuccess(res, data.data)
     } catch (error) {
         console.log(error)
         return responseTrait.ResponseInternalServer(res)

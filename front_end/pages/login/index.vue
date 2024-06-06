@@ -42,6 +42,15 @@
 							Sign in
 						</button>
 					</form>
+					<div>
+						Or sign with
+					</div>
+					<div class="flex justify-center">
+						<GoogleSignInButton
+							@success="handleGoogleLoginSuccess"
+							@error="handleGoogleLoginError"
+						></GoogleSignInButton>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -57,6 +66,9 @@
 <script setup>
 import { ref } from 'vue'
 import OTPModal from '~/components/OTPModal.vue';
+import {
+	GoogleSignInButton,
+} from "vue3-google-signin";
 
 let showOtp = ref(false)
 let userId = ref('')
@@ -67,6 +79,7 @@ const { $getVisitorId } = useNuxtApp()
 
 const config = useRuntimeConfig()
 const AUTH_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/code`
+const LINKED_SIGN_IN_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/login/linked_account`
 const REQUEST_OTP_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/otp/send`
 
 // Check if user was logged in
@@ -164,6 +177,43 @@ const submitForm = async () => {
 			console.log('error roiiii')
 		},
 	})
-
 }
+
+const handleGoogleLoginSuccess = async (response) => {
+	const { credential } = response;
+	visitorId = await $getVisitorId()
+	const { data, error } = await useFetch(LINKED_SIGN_IN_ENDPOINT, 
+	{
+		onRequest({ request, options }) {
+			options.method = 'POST',
+			options.headers = {...options.headers, 'Content-Type': 'application/x-www-form-urlencoded'}
+			options.body = new URLSearchParams({
+								credential: credential,
+								fingerprint: visitorId,
+								...params
+							})
+		},
+		onResponse({ request, response, options }) {
+			console.log('response ne: ', response._data)
+			if (response.status == 200) {
+				auth_code = response._data.data.code
+				console.log('response otp', response._data.data.otp)
+				if (response._data.data.otp == true) {
+					requestSendOTP(response._data.data.user_id)
+					userId = response._data.data.user_id
+					showOtp.value = true
+				}
+				else redirectToClient()
+			}
+		},
+		onResponseError({ request, response, options }) {
+			console.log('error roiiii')
+		},
+	})
+};
+
+// handle an error event
+const handleGoogleLoginError = () => {
+	console.error("Login failed");
+};
 </script>

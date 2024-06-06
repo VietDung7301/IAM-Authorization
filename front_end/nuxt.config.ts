@@ -12,8 +12,12 @@ export default defineNuxtConfig({
         config.plugins.push(vuetify({ autoImport: true }))
       })
     },
-    '@nuxtjs/tailwindcss'
+    '@nuxtjs/tailwindcss',
+    'nuxt-vue3-google-signin'
   ],
+  googleSignIn: {
+    clientId: process.env.GOOGLE_ID,
+  },
   vite: {
     vue: {
       template: {

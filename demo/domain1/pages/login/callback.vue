@@ -2,16 +2,16 @@
 	<iframe id="save-iframe" :src="SAVE_TOKEN_ENDPOINT" title="iam"></iframe>
 	<iframe id="get-iframe" :src="GET_TOKEN_ENDPOINT" title="iam"></iframe>
 </template>
+
 <script setup>
+import { storeToRefs } from 'pinia'; // import storeToRefs helper hook from pinia
+import { useAuthStore } from '~/store/auth'; // import the auth store we just created
+
+const { authenticateUser } = useAuthStore(); // use authenticateUser action from  auth store
+
+const { authenticated } = storeToRefs(useAuthStore()); // make authenticated state reactive with storeToRefs
+
 const config = useRuntimeConfig()
-let access_token = useCookie('access_token', {
-	default: () => {},
-	watch: true
-})
-let refresh_token = useCookie('refresh_token', {
-	default: () => {},
-	watch: true
-})
 let SAVE_TOKEN_ENDPOINT = config.public.SAVE_TOKEN_ENDPOINT;
 let GET_TOKEN_ENDPOINT = config.public.GET_TOKEN_ENDPOINT;
 
@@ -37,8 +37,7 @@ if (params.code) {
 	if (error.value) {
 		console.log('lay token error roi', error)
 	} else {
-		access_token.value = data.value.data.access_token;
-		refresh_token.value = data.value.data.refresh_token;
+		authenticateUser(data.value.data.access_token, data.value.data.refresh_token, data.value.data.id_token)
 
 		if (process.browser) {
 			const iframe = document.querySelector("#save-iframe")

@@ -80,6 +80,14 @@ const initDB = async () => {
         },
     ])
 
+    await sequelize.models.LinkedAccount.bulkCreate([
+        {
+            user_id: '1',
+            provider: 'https://accounts.google.com',
+            sub: '112847791659824001835'
+        },
+    ])
+
     // systemDB.close();
     console.log("\n\nDone. Initial database successfully.");
 }

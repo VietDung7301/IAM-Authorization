@@ -2,7 +2,8 @@
 export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: [
-    '@nuxtjs/tailwindcss'
+    '@nuxtjs/tailwindcss',
+    '@pinia/nuxt',
   ],
   runtimeConfig: {
     public: {
@@ -13,7 +14,10 @@ export default defineNuxtConfig({
       CLIENT_ID: process.env.CLIENT_ID,
       CLIENT_SECRET: process.env.CLIENT_SECRET,
       AUTH_SCOPES: process.env.AUTH_SCOPES,
-      RESOURCE_ENDPOINT: process.env.RESOURCE_ENDPOINT
+      RESOURCE_ENDPOINT: process.env.RESOURCE_ENDPOINT,
+      SAVE_TOKEN_ENDPOINT: process.env.SAVE_TOKEN_ENDPOINT,
+      GET_TOKEN_ENDPOINT: process.env.GET_TOKEN_ENDPOINT,
+      LOGOUT_ENDPOINT: process.env.LOGOUT_ENDPOINT
     }
   },
   devServer: {

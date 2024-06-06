@@ -42,7 +42,7 @@ import { popScopeId } from 'vue';
 				options.body = new URLSearchParams({
 									otp: otp.value,
 									user_id: props.user_id,
-									visitorId: props.visitorId
+									fingerprint: props.visitorId
 								})
 			},
 			onResponse({ request, response, options }) {

@@ -20,12 +20,20 @@
 			</div>
 			<div class="md:block w-48">
 				<ul class="flex space-x-2">
-					<li><nuxtLink to="/login"
-						class="cta border-blue-500 border hover:bg-slate-50 px-3 py-2 rounded text-blue font-semibold"
+					<li v-if="!authenticated">
+						<nuxtLink 
+							to="/login"
+							class="cta border-blue-500 border hover:bg-slate-50 px-3 py-2 rounded text-blue font-semibold"
 						>
-						Sign In
+							Sign In
 					</nuxtLink></li>
-					<li><NuxtLink to="#" class="cta bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded text-white font-semibold">Sign Up</nuxtLink>
+					<li v-if="!authenticated"><NuxtLink to="#" class="cta bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded text-white font-semibold">Sign Up</nuxtLink>
+					</li>
+					<li v-if="authenticated">
+						<nuxtLink 
+							@click="logout"
+							class="cta border-blue-500 border hover:bg-slate-50 px-3 py-2 rounded text-blue font-semibold"
+						> Sign out</nuxtLink>
 					</li>
 				</ul>
 			</div>
@@ -35,7 +43,21 @@
 		<slot />
 	</div>
 </template>
+
+
 <script setup>
-	let route = useRoute().fullPath
-	console.log('route', route)
+	import { storeToRefs } from 'pinia'; // import storeToRefs helper hook from pinia
+	import { useAuthStore } from '~/store/auth'; // import the auth store we just created
+	const config = useRuntimeConfig()
+
+	const router = useRouter();
+
+
+	const { logUserOut } = useAuthStore(); // use authenticateUser action from  auth store
+	const { authenticated } = storeToRefs(useAuthStore()); // make authenticated state reactive with storeToRefs
+
+	const logout = () => {
+		logUserOut(config.public.LOGOUT_ENDPOINT, config.public.CLIENT_ID);
+		router.push('/');
+	}
 </script>

@@ -83,7 +83,14 @@ WSGI_APPLICATION = 'admin.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    "default": {},
+    "default": {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('AUTH_DB_NAME'),
+        'USER': os.getenv('AUTH_DB_USER'),
+        'PASSWORD': os.getenv('AUTH_DB_PASSWORD'),
+        'HOST': os.getenv('AUTH_DB_HOST'),
+        'PORT': os.getenv('AUTH_DB_PORT'),
+    },
     'authorization': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.getenv('AUTH_DB_NAME'),

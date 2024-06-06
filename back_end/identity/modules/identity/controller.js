@@ -1,6 +1,7 @@
 const UserService = require("./services/UserService");
 const FingerprintService = require("./services/FingerprintService")
 const OtpService = require("./services/OtpService")
+const LinkedAccountService = require("./services/LinkedAccountService")
 const randomStr = require("randomstring")
 const responseTrait = require('../../traits/responseTrait')
 const bcrypt = require('bcrypt')
@@ -96,6 +97,29 @@ exports.authenticateUser = async (req, res) => {
         if (!await bcrypt.compare(data.password, user.password))
             return responseTrait.ResponseNotFound(res)
 
+        delete user.dataValues.password
+        return responseTrait.ResponseSuccess(res, {
+            user:user.dataValues
+        })
+    } catch (error) {
+        console.log(error)
+        return responseTrait.ResponseNotFound(res)
+    }
+}
+
+exports.authenticateLinkedAccount = async (req, res) => {
+    try {
+        const data = req.body
+        const config = {
+            provider: data.iss,
+            sub: data.sub
+        }
+        console.log('config', config)
+        const linkedAccount = await LinkedAccountService.getAccount(config)
+        if (!linkedAccount) {
+            return responseTrait.ResponseNotFound(res)
+        }
+        const user = await UserService.getUser({id: linkedAccount.user_id})
         delete user.dataValues.password
         return responseTrait.ResponseSuccess(res, {
             user:user.dataValues

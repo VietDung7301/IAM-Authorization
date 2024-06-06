@@ -24,7 +24,7 @@ router.post('/api/auth/token', [
         ], controller.tokenGrant)
 // router.post('/api/auth/client', controller.ClientRegistration)
 
-router.post('/api/auth/logout', [cors(), tokenAuthentication.Handle], controller.logout)
+router.post('/api/auth/logout', [cors({origin: ["*"],}), tokenAuthentication.Handle], controller.logout)
 
 //set cors only for frontend
 router.post('/api/auth/otp/send', cors({origin: [process.env.FE_URL],}), controller.sendOtp)

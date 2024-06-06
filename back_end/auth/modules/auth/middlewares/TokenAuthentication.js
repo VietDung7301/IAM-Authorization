@@ -5,7 +5,8 @@ const responseTrait = require('../../../traits/responseTrait')
 exports.Handle = async (req, res, next) => {
     console.log('token authentication')
     const data = req.body
-    const authorization = req.get('Authorization')
+    // const authorization = req.get('Authorization')
+    const authorization = data.Authorization
 
     if (data.client_id == null || 
         data.user_id == null)

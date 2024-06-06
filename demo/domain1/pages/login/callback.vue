@@ -37,7 +37,7 @@ if (params.code) {
 	if (error.value) {
 		console.log('lay token error roi', error)
 	} else {
-		authenticateUser(data.value.data.access_token, data.value.data.refresh_token, data.value.data.id_token)
+		authenticateUser(data.value.data.access_token, data.value.data.refresh_token, data.value.data.openid.id_token)
 
 		if (process.browser) {
 			const iframe = document.querySelector("#save-iframe")

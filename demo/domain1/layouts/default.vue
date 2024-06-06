@@ -1,5 +1,5 @@
 <template>
-	<nav class="fixed w-full p-6 bg-transparent">
+	<nav class="fixed w-full py-2 px-10 bg-white z-50">
 		<div class="flex items-center justify-between">
 			<!-- Header logo -->
 			<div>
@@ -11,11 +11,18 @@
 			<!-- Navbar -->
 			<div class="md:block">
 				<ul class="flex space-x-8 font-sans">
-					<li><nuxtLink to="/" class="active border-b-2 border-blue-500 pb-1">Home</nuxtLink></li>
-					<li><nuxtLink to="/service" class="">Services</nuxtLink></li>
+					<template v-for="item in navItems">
+						<li v-if="item.link == router.currentRoute.value.fullPath">
+							<nuxtLink :to="item.link" class="active border-b-2 border-blue-500 pb-1">{{ item.title }}</nuxtlink>
+						</li>
+						<li v-else><nuxtLink :to="item.link">{{ item.title }}</nuxtlink></li>
+  					</template>
+
+					<!-- <li><nuxtLink to="/" class="active border-b-2 border-blue-500 pb-1">Home</nuxtLink></li>
+					<li><nuxtLink to="/students" class="">Students</nuxtLink></li>
 					<li><a href="#" class="">Features</a></li>
 					<li><a href="#" class="">FAQ</a></li>
-					<li><a href="#" class="">Contact</a></li>
+					<li><a href="#" class="">Contact</a></li> -->
 				</ul>
 			</div>
 			<div class="md:block w-48">
@@ -39,7 +46,7 @@
 			</div>
 		</div>
 	</nav>
-	<div>
+	<div class="pt-20">
 		<slot />
 	</div>
 </template>
@@ -52,9 +59,18 @@
 
 	const router = useRouter();
 
-
 	const { logUserOut } = useAuthStore(); // use authenticateUser action from  auth store
 	const { authenticated } = storeToRefs(useAuthStore()); // make authenticated state reactive with storeToRefs
+
+	const navItems = ref([
+		{ link: '/', title: 'Home' },
+		{ link: '/students', title: 'Manage students' },
+		{ link: '#', title: 'Features' },
+		{ link: '#', title: 'FAQ' },
+		{ link: '#', title: 'Contact' }
+	])
+
+	console.log(router.currentRoute.value.path)
 
 	const logout = () => {
 		logUserOut(config.public.LOGOUT_ENDPOINT, config.public.CLIENT_ID);

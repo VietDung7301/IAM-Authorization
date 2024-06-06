@@ -18,7 +18,7 @@ const { data, error } = await useFetch(config.public.RESOURCE_ENDPOINT,
             }
 			options.body = new URLSearchParams({
 								method: 'GET',
-                                url: 'http://localhost:8005/students',
+                                url: <string> config.public.EX_RESOURCE_1,
                                 content_type: 'application/json',
 							})
 		},

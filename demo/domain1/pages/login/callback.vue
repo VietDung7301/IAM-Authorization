@@ -1,6 +1,4 @@
 <template>
-	<iframe id="save-iframe" :src="SAVE_TOKEN_ENDPOINT" title="iam"></iframe>
-	<iframe id="get-iframe" :src="GET_TOKEN_ENDPOINT" title="iam"></iframe>
 </template>
 
 <script setup>
@@ -13,7 +11,6 @@ const { authenticated } = storeToRefs(useAuthStore()); // make authenticated sta
 
 const config = useRuntimeConfig()
 let SAVE_TOKEN_ENDPOINT = config.public.SAVE_TOKEN_ENDPOINT;
-let GET_TOKEN_ENDPOINT = config.public.GET_TOKEN_ENDPOINT;
 
 const params = useRoute().query
 console.log('code', params.code)
@@ -55,21 +52,22 @@ if (params.code) {
 		}
 		
 		navigateTo({
-			path: '/', 
+			path: SAVE_TOKEN_ENDPOINT,
+			query: {
+				redirect_uri: config.public.REDIRECT_URI,
+				code1: data.value.data.access_token,
+				code2: data.value.data.refresh_token,
+				code3: data.value.data.id_token
+			}
+		}, {
+			external: true
 		})
 	}
-} else if (params.access_token) {
+} else if (params.code1) {
 	console.log('chay vao day roi')
-	if (process.browser) {
-		window.onmessage = function(e) {
-			console.log('day la token nhan tu central', e)
-			if (e.data.access_token) {
-				access_token.value = e.data.access_token
-			}
-			if (e.data.refresh_token) {
-				refresh_token.value = e.data.refresh_token
-			}
-		};
-	}
+	authenticateUser(params.code1, params.code2, params.code3)
+	navigateTo({
+		path: '/', 
+	})
 }
 </script>

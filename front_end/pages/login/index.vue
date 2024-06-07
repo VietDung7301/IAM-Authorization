@@ -66,9 +66,8 @@
 <script setup>
 import { ref } from 'vue'
 import OTPModal from '~/components/OTPModal.vue';
-import {
-	GoogleSignInButton,
-} from "vue3-google-signin";
+import {GoogleSignInButton,} from "vue3-google-signin";
+import {jwtDecode} from "jwt-decode"
 
 let showOtp = ref(false)
 let userId = ref('')
@@ -92,6 +91,10 @@ const refresh_token = useCookie('refresh_token', {
 	default: () => {},
 	watch: true
 })
+const id_token = useCookie('id_token', {
+	default: () => {},
+	watch: true
+})
 
 
 if (access_token.value && access_token.value != null) {
@@ -100,8 +103,9 @@ if (access_token.value && access_token.value != null) {
 	navigateTo({
 		path: params.redirect_uri, 
 		query: {
-			access_token: access_token.value,
-			refresh_token: refresh_token.value
+			code1: access_token.value,
+			code2: refresh_token.value,
+			code3: id_token.value
 		}
 	}, {
 		external: true

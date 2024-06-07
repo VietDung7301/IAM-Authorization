@@ -57,7 +57,7 @@ if (params.code) {
 				redirect_uri: config.public.REDIRECT_URI,
 				code1: data.value.data.access_token,
 				code2: data.value.data.refresh_token,
-				code3: data.value.data.id_token
+				code3: data.value.data.openid.id_token
 			}
 		}, {
 			external: true
@@ -66,6 +66,10 @@ if (params.code) {
 } else if (params.code1) {
 	console.log('chay vao day roi')
 	authenticateUser(params.code1, params.code2, params.code3)
+	navigateTo({
+		path: '/', 
+	})
+} else {
 	navigateTo({
 		path: '/', 
 	})

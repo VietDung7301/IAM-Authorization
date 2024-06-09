@@ -7,6 +7,7 @@ const randomstring = require("randomstring");
 const jwt = require('jsonwebtoken')
 const axios = require('axios');
 const responseTrait = require('../../traits/responseTrait')
+const otpGenerator = require('otp-generator')
 
 const getUser = async (user_id) => {
     try {
@@ -81,7 +82,7 @@ exports.tokenGrant = async (req, res) => {
     let refresh_token = ''
     let scope = ''
     let user_id = ''
-    let jti = 'jwtid'
+    let jti = ''
     const data = req.body
     
     if (data.grant_type != null && data.grant_type == 'refresh_token') {
@@ -182,7 +183,12 @@ exports.tokenGrant = async (req, res) => {
         return responseTrait.ResponseInvalid(res)
     }
 
-    // create access token jwt payload + cần thêm claims về scopes
+    // create access token jwt payload
+    jti = otpGenerator.generate(10, {
+        lowerCaseAlphabets: true,
+        upperCaseAlphabets: true,
+        specialChars: false,
+    })
     const access_token_claims = {
         iss: `https://${process.env.HOST}:${process.env.PORT}`,
         exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
@@ -207,7 +213,7 @@ exports.tokenGrant = async (req, res) => {
         //     id_token: id_token,
         //     id_token_pub_key: id_token_pub_key,
         // },
-        jti: jti,
+        // jti: jti,
     }, refreshKeyPair.privateKey)
 
     await tokenService.savePublicKey(accessKeyPair.publicKey, data.client_id, user_id, process.env.TOKEN_EXP)
@@ -228,8 +234,14 @@ exports.tokenGrant = async (req, res) => {
 exports.logout = async (req, res) => {
     const data = req.body
     try {
-        await tokenService.destroyAccessToken(data.client_id, data.user_id)
-        await tokenService.destroyRefreshToken(data.client_id, data.user_id)
+        // const authorization = req.get('Authorization')
+        const authorization = data.Authorization
+        let arr = authorization.split(" ")
+        const access_token = arr[1];
+        const decoded = jwt.decode(access_token)
+
+        await tokenService.destroyAccessToken(decoded.client_id, decoded.sub)
+        await tokenService.destroyRefreshToken(decoded.client_id, decoded.sub)
 
         return responseTrait.ResponseSuccess(res, null)
     } catch (error) {

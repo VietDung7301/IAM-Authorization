@@ -1,6 +1,6 @@
 const { client } = require("../../../helpers/redis")
 
-exports.savePublicKey = async (publicKey, client_id, user_id, exp = 3600) => {
+exports.savePublicKey = async (publicKey, client_id, user_id, exp = 600) => {
     try {
         const key = client_id + '@' + user_id + 'AccessToken'
         const content = {

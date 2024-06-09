@@ -81,36 +81,52 @@ exports.tokenGrant = async (req, res) => {
     let refresh_token = ''
     let scope = ''
     let user_id = ''
+    let jti = 'jwtid'
     const data = req.body
     
     if (data.grant_type != null && data.grant_type == 'refresh_token') {
         if (data.refresh_token == null ||
             data.client_id == null ||
-            data.user_id == null ||
-            data.scope == null)
+            data.user_id == null)
             return responseTrait.ResponseInvalid(res)
-
-        const refresh_token = await tokenService.getRefreshToken(data.client_id, data.user_id)
         
-        if (refresh_token != data.refresh_token) {
-            return responseTrait.Response(res, 400, "refresh token invalid!", null)
-        }
-
-        // verify refresh token bang publicKey
-        const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
+        let openid = false
+        const refreshPubKey = await tokenService.getRefreshToken(data.client_id, data.user_id)
+        
         try {
-            jwt.verify(refresh_token, public_key, function(err, decoded) {
-                id_token = decoded.openid.id_token
-                id_token_pub_key = decoded.openid.id_token_pub_key
+            jwt.verify(data.refresh_token, refreshPubKey, function(err, decoded) {
+                if (!decoded) {
+                    throw new Error("cannot decode refresh token!");
+                }
+                scope = decoded.scope
+                openid = decoded.openid
             });
         } catch (error) {
             console.log(error)
             return responseTrait.Response(res, 400, "refresh token invalid!", null)
         }
 
-        // generate scope
-        scope = await getScope(data.user_id, data.scope)
+        // generate id token if needed
         user_id = data.user_id
+        if (openid) {
+            const user = await getUser(user_id)
+            if (user) {
+                // id token claims
+                const id_token_claims = {
+                    iss: `https://${process.env.HOST}:${process.env.PORT}`,
+                    sub: data.user_id,
+                    aud: [
+                        data.client_id,
+                    ],
+                    exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
+                    iat: Math.floor(Date.now() / 1000),
+                    user
+                }
+                const keyPair = helpers.Generator.generateKeyPair()
+                id_token_pub_key = keyPair.publicKey
+                id_token = helpers.JWT.genAccessToken(id_token_claims, keyPair.privateKey)
+            }
+        }
     } else if (data.grant_type != null && data.grant_type == 'authorization_code') {
 
         if (data.code == null ||
@@ -157,7 +173,6 @@ exports.tokenGrant = async (req, res) => {
                 id_token_pub_key = keyPair.publicKey
                 id_token = helpers.JWT.genAccessToken(id_token_claims, keyPair.privateKey)
             }
-
         }
 
         // create scope
@@ -178,22 +193,25 @@ exports.tokenGrant = async (req, res) => {
         client_id: data.client_id,
         scope: scope,
         iat: Math.floor(Date.now() / 1000),
-        jti: 'jwtid'
+        jti: jti,
     }
     // public key và private key
-    const { publicKey, privateKey } = helpers.Generator.generateKeyPair()
+    const accessKeyPair = helpers.Generator.generateKeyPair()
+    const refreshKeyPair = helpers.Generator.generateKeyPair()
 
-    access_token = helpers.JWT.genAccessToken(access_token_claims, privateKey)
+    access_token = helpers.JWT.genAccessToken(access_token_claims, accessKeyPair.privateKey)
     refresh_token = helpers.JWT.genAccessToken({
-        string: randomstring.generate(30),
-        openid: {
-            id_token: id_token,
-            id_token_pub_key: id_token_pub_key,
-        },
-    }, privateKey)
+        openid: id_token !== '', 
+        scope: scope,
+        // openid: {
+        //     id_token: id_token,
+        //     id_token_pub_key: id_token_pub_key,
+        // },
+        jti: jti,
+    }, refreshKeyPair.privateKey)
 
-    await tokenService.savePublicKey(publicKey, data.client_id, user_id, process.env.TOKEN_EXP)
-    await tokenService.saveRefreshToken(refresh_token, data.client_id, user_id, process.env.REFRESH_TOKEN_EXP)
+    await tokenService.savePublicKey(accessKeyPair.publicKey, data.client_id, user_id, process.env.TOKEN_EXP)
+    await tokenService.saveRefreshToken(refreshKeyPair.publicKey, data.client_id, user_id, process.env.REFRESH_TOKEN_EXP)
 
     return responseTrait.ResponseSuccess(res, {
         access_token: access_token,

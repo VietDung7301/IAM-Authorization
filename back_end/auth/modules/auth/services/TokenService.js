@@ -1,6 +1,6 @@
 const { client } = require("../../../helpers/redis")
 
-exports.savePublicKey = async (publicKey, client_id, user_id) => {
+exports.savePublicKey = async (publicKey, client_id, user_id, exp = 3600) => {
     try {
         const key = client_id + '@' + user_id + 'AccessToken'
         const content = {
@@ -8,6 +8,7 @@ exports.savePublicKey = async (publicKey, client_id, user_id) => {
         }
 
         await client.set(key, JSON.stringify(content))
+        await client.expire(key, parseInt(exp))
     } catch (error) {
         console.log(error)
         return false
@@ -54,7 +55,7 @@ exports.destroyRefreshToken = async (client_id, user_id) => {
     }
 }
 
-exports.saveRefreshToken = async (refresh_token, client_id, user_id) => {
+exports.saveRefreshToken = async (refresh_token, client_id, user_id, exp = 604800) => {
     try {
         const key = client_id + '@' + user_id + 'RefreshToken'
         const content = {
@@ -62,6 +63,7 @@ exports.saveRefreshToken = async (refresh_token, client_id, user_id) => {
         }
 
         await client.set(key, JSON.stringify(content))
+        await client.expire(key, parseInt(exp))
     } catch (error) {
         console.log(error)
         return false

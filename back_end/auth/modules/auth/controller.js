@@ -192,8 +192,8 @@ exports.tokenGrant = async (req, res) => {
         },
     }, privateKey)
 
-    await tokenService.savePublicKey(publicKey, data.client_id, user_id)
-    await tokenService.saveRefreshToken(refresh_token, data.client_id, user_id)
+    await tokenService.savePublicKey(publicKey, data.client_id, user_id, process.env.TOKEN_EXP)
+    await tokenService.saveRefreshToken(refresh_token, data.client_id, user_id, process.env.REFRESH_TOKEN_EXP)
 
     return responseTrait.ResponseSuccess(res, {
         access_token: access_token,

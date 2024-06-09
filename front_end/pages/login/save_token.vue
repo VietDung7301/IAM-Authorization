@@ -1,5 +1,4 @@
 <template>
-	
 </template>
   
 <script setup>
@@ -12,16 +11,26 @@ const refresh_token = useCookie('refresh_token', {
 	default: () => {},
 	watch: true
 })
+const id_token = useCookie('id_token', {
+	default: () => {},
+	watch: true
+})
+const params = useRoute().query
 
-if (process.browser) {
-	window.onmessage = function(e) {
-		if (e.data.access_token) {
-			access_token.value = e.data.access_token
-		}
-		if (e.data.refresh_token) {
-			refresh_token.value = e.data.refresh_token
-		}
-	};
+if (params.code1) {
+	console.log('saving token')
+	access_token.value = params.code1
+	refresh_token.value = params.code2
+	id_token.value = params.code3
 }
+
+if (params.redirect_uri) {
+	navigateTo({
+		path: params.redirect_uri
+	}, {
+		external: true
+	})
+}
+
 </script>
   

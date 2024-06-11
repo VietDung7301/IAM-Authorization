@@ -87,13 +87,13 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 			}
 
 			// delete public key
-			redisKey = fmt.Sprintf("%s@%sAccessToken", claims["client_id"].(string), claims["sub"].(string))
+			redisKey = fmt.Sprintf("%s@%sAccessToken", claims["jti"].(string), claims["sub"].(string))
 			err = igmw.RedisClient.Del(ctx, redisKey).Err()
 			if err != nil {
 				fmt.Printf("%s\n", err.Error())
 			}
 
-			redisKey = fmt.Sprintf("%s@%sRefreshToken", claims["client_id"].(string), claims["sub"].(string))
+			redisKey = fmt.Sprintf("%s@%sRefreshToken", claims["jti"].(string), claims["sub"].(string))
 			err = igmw.RedisClient.Del(ctx, redisKey).Err()
 			if err != nil {
 				fmt.Printf("%s\n", err.Error())

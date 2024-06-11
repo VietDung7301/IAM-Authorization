@@ -92,7 +92,8 @@ exports.tokenGrant = async (req, res) => {
             return responseTrait.ResponseInvalid(res)
         
         let openid = false
-        const refreshPubKey = await tokenService.getRefreshToken(data.client_id, data.user_id)
+        const unverifiedDecoded = jwt.decode(data.refresh_token)
+        const refreshPubKey = await tokenService.getRefreshToken(unverifiedDecoded?.jti, data.user_id)
         
         try {
             jwt.verify(data.refresh_token, refreshPubKey, function(err, decoded) {
@@ -106,6 +107,10 @@ exports.tokenGrant = async (req, res) => {
             console.log(error)
             return responseTrait.Response(res, 400, "refresh token invalid!", null)
         }
+
+        // revoke tokens
+        await tokenService.destroyAccessToken(unverifiedDecoded?.jti, data.user_id)
+        await tokenService.destroyRefreshToken(unverifiedDecoded?.jti, data.user_id)
 
         // generate id token if needed
         user_id = data.user_id
@@ -129,7 +134,6 @@ exports.tokenGrant = async (req, res) => {
             }
         }
     } else if (data.grant_type != null && data.grant_type == 'authorization_code') {
-
         if (data.code == null ||
             data.redirect_uri == null ||
             data.client_id == null)
@@ -183,7 +187,7 @@ exports.tokenGrant = async (req, res) => {
         return responseTrait.ResponseInvalid(res)
     }
 
-    // create access token jwt payload
+    // create access token
     jti = otpGenerator.generate(10, {
         lowerCaseAlphabets: true,
         upperCaseAlphabets: true,
@@ -209,15 +213,11 @@ exports.tokenGrant = async (req, res) => {
     refresh_token = helpers.JWT.genAccessToken({
         openid: id_token !== '', 
         scope: scope,
-        // openid: {
-        //     id_token: id_token,
-        //     id_token_pub_key: id_token_pub_key,
-        // },
-        // jti: jti,
+        jti: jti,
     }, refreshKeyPair.privateKey)
 
-    await tokenService.savePublicKey(accessKeyPair.publicKey, data.client_id, user_id, process.env.TOKEN_EXP)
-    await tokenService.saveRefreshToken(refreshKeyPair.publicKey, data.client_id, user_id, process.env.REFRESH_TOKEN_EXP)
+    await tokenService.savePublicKey(accessKeyPair.publicKey, jti, user_id, process.env.TOKEN_EXP)
+    await tokenService.saveRefreshToken(refreshKeyPair.publicKey, jti, user_id, process.env.REFRESH_TOKEN_EXP)
 
     return responseTrait.ResponseSuccess(res, {
         access_token: access_token,
@@ -240,8 +240,8 @@ exports.logout = async (req, res) => {
         const access_token = arr[1];
         const decoded = jwt.decode(access_token)
 
-        await tokenService.destroyAccessToken(decoded.client_id, decoded.sub)
-        await tokenService.destroyRefreshToken(decoded.client_id, decoded.sub)
+        await tokenService.destroyAccessToken(decoded.jti, decoded.sub)
+        await tokenService.destroyRefreshToken(decoded.jti, decoded.sub)
 
         return responseTrait.ResponseSuccess(res, null)
     } catch (error) {

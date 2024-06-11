@@ -1,8 +1,8 @@
 const { client } = require("../../../helpers/redis")
 
-exports.savePublicKey = async (publicKey, client_id, user_id, exp = 600) => {
+exports.savePublicKey = async (publicKey, jti, user_id, exp = 600) => {
     try {
-        const key = client_id + '@' + user_id + 'AccessToken'
+        const key = jti + '@' + user_id + 'AccessToken'
         const content = {
             publicKey: publicKey
         }
@@ -15,9 +15,9 @@ exports.savePublicKey = async (publicKey, client_id, user_id, exp = 600) => {
     }
 }
 
-exports.getPublicKey = async (client_id, user_id) => {
+exports.getPublicKey = async (jti, user_id) => {
     try {
-        const key = client_id + '@' + user_id + 'AccessToken'
+        const key = jti + '@' + user_id + 'AccessToken'
         const value = await client.get(key)
         const content = JSON.parse(value)
 
@@ -31,9 +31,9 @@ exports.getPublicKey = async (client_id, user_id) => {
     }
 }
 
-exports.destroyAccessToken = async (client_id, user_id) => {
+exports.destroyAccessToken = async (jti, user_id) => {
     try {
-        const key = client_id + '@' + user_id + 'AccessToken'
+        const key = jti + '@' + user_id + 'AccessToken'
 
         await client.del(key)
         return true
@@ -43,9 +43,9 @@ exports.destroyAccessToken = async (client_id, user_id) => {
     }
 }
 
-exports.destroyRefreshToken = async (client_id, user_id) => {
+exports.destroyRefreshToken = async (jti, user_id) => {
     try {
-        const key = client_id + '@' + user_id + 'RefreshToken'
+        const key = jti + '@' + user_id + 'RefreshToken'
 
         await client.del(key)
         return true
@@ -55,9 +55,9 @@ exports.destroyRefreshToken = async (client_id, user_id) => {
     }
 }
 
-exports.saveRefreshToken = async (refresh_token, client_id, user_id, exp = 604800) => {
+exports.saveRefreshToken = async (refresh_token, jti, user_id, exp = 604800) => {
     try {
-        const key = client_id + '@' + user_id + 'RefreshToken'
+        const key = jti + '@' + user_id + 'RefreshToken'
         const content = {
             token: refresh_token,
         }
@@ -70,9 +70,9 @@ exports.saveRefreshToken = async (refresh_token, client_id, user_id, exp = 60480
     }
 }
 
-exports.getRefreshToken = async (client_id, user_id) => {
+exports.getRefreshToken = async (jti, user_id) => {
     try {
-        const key = client_id + '@' + user_id + 'RefreshToken'
+        const key = jti + '@' + user_id + 'RefreshToken'
         const value = await client.get(key)
         const content = JSON.parse(value)
 

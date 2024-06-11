@@ -85,3 +85,35 @@ exports.getRefreshToken = async (jti, user_id) => {
         return false
     }
 }
+
+// for avoid ddos purpose
+exports.countKeyNumber = async (user_id) => {
+    try {
+        const arrOfRefreshKey = await client.keys(`*@${user_id}RefreshToken`)
+
+        return arrOfRefreshKey.length
+    } catch (error) {
+        console.log(error)
+        return 0
+    }
+}
+
+exports.destroyAllKey = async (user_id) => {
+    try {
+        // delete all refresh key
+        const arrOfRefreshKey = await client.keys(`*@${user_id}RefreshToken`)
+        arrOfRefreshKey.forEach(async (key) => {
+            await client.del(key)
+        })
+
+        const arrOfAccessKey = await client.keys(`*@${user_id}AccessToken`)
+        arrOfAccessKey.forEach(async (key) => {
+            await client.del(key)
+        })
+
+        return true
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}

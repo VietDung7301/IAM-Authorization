@@ -23,7 +23,7 @@ exports.checkPermission = async (req, res) => {
         const url = new URL(data.url)
         const scopes = data.scopes.split(' ')
         const config = {
-            url: url.origin,
+            url: url.origin + url.pathname,
             method: data.method,
             scopes: scopes
         }

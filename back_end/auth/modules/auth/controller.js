@@ -7,6 +7,7 @@ const randomstring = require("randomstring");
 const jwt = require('jsonwebtoken')
 const axios = require('axios');
 const responseTrait = require('../../traits/responseTrait')
+const otpGenerator = require('otp-generator')
 
 const getUser = async (user_id) => {
     try {
@@ -81,137 +82,189 @@ exports.tokenGrant = async (req, res) => {
     let refresh_token = ''
     let scope = ''
     let user_id = ''
+    let jti = ''
     const data = req.body
-    
-    if (data.grant_type != null && data.grant_type == 'refresh_token') {
-        if (data.refresh_token == null ||
-            data.client_id == null ||
-            data.user_id == null ||
-            data.scope == null)
-            return responseTrait.ResponseInvalid(res)
 
-        const refresh_token = await tokenService.getRefreshToken(data.client_id, data.user_id)
-        
-        if (refresh_token != data.refresh_token) {
-            return responseTrait.Response(res, 400, "refresh token invalid!", null)
-        }
-
-        // verify refresh token bang publicKey
-        const public_key = await tokenService.getPublicKey(data.client_id, data.user_id)
-        try {
-            jwt.verify(refresh_token, public_key, function(err, decoded) {
-                id_token = decoded.openid.id_token
-                id_token_pub_key = decoded.openid.id_token_pub_key
-            });
-        } catch (error) {
-            console.log(error)
-            return responseTrait.Response(res, 400, "refresh token invalid!", null)
-        }
-
-        // generate scope
-        scope = await getScope(data.user_id, data.scope)
-        user_id = data.user_id
-    } else if (data.grant_type != null && data.grant_type == 'authorization_code') {
-
-        if (data.code == null ||
-            data.redirect_uri == null ||
-            data.client_id == null)
-            return responseTrait.ResponseInvalid(res)
-    
-        // get code for checking
-        const dataFromCode = helpers.Generator.getDataFromCode(data.code) ? helpers.Generator.getDataFromCode(data.code) : undefined
-
-        const code = await codeService.getAuthCode(dataFromCode?.client_id, dataFromCode?.user_id)
-    
-        if (!code)
-            return responseTrait.Response(res, 400, "authorization code not found!", null)
-    
-        if (code != data.code) {
-            return responseTrait.Response(res, 400, "authorization code invalid!", null)
-        } else {
-            await codeService.removeAuthCode(dataFromCode.client_id, dataFromCode.user_id)
-        }
-
-        if (data.redirect_uri != dataFromCode?.redirect_uri) {
-            return responseTrait.Response(res, 400, "redirect url invalid!", null)
-        }
-        
-        // create id token jwt payload
-        if (dataFromCode.scope != undefined && dataFromCode.scope.includes("openid")) {
-            // call to identity module to get user
-            const user = await getUser(dataFromCode.user_id)
-
-            if (user) {
-                // id token claims
-                const id_token_claims = {
-                    iss: `https://${process.env.HOST}:${process.env.PORT}`,
-                    sub: data.user_id,
-                    aud: [
-                        data.client_id,
-                    ],
-                    exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
-                    iat: Math.floor(Date.now() / 1000),
-                    user
-                }
-                const  keyPair  = helpers.Generator.generateKeyPair()
-                id_token_pub_key = keyPair.publicKey
-                id_token = helpers.JWT.genAccessToken(id_token_claims, keyPair.privateKey)
+    try {
+        if (data.grant_type != null && data.grant_type == 'refresh_token') {
+            if (data.refresh_token == null ||
+                data.client_id == null ||
+                data.user_id == null)
+                return responseTrait.ResponseInvalid(res)
+            
+            let openid = false
+            const unverifiedDecoded = jwt.decode(data.refresh_token)
+            const refreshPubKey = await tokenService.getRefreshToken(unverifiedDecoded?.jti, data.user_id)
+            
+            try {
+                jwt.verify(data.refresh_token, refreshPubKey, function(err, decoded) {
+                    if (!decoded) {
+                        throw new Error("cannot decode refresh token!");
+                    }
+                    scope = decoded.scope
+                    openid = decoded.openid
+                });
+            } catch (error) {
+                console.log(error)
+                return responseTrait.Response(res, 400, "refresh token invalid!", null)
             }
-
+    
+            // revoke tokens
+            await tokenService.destroyAccessToken(unverifiedDecoded?.jti, data.user_id)
+            await tokenService.destroyRefreshToken(unverifiedDecoded?.jti, data.user_id)
+    
+            // generate id token if needed
+            user_id = data.user_id
+            if (openid) {
+                const user = await getUser(user_id)
+                if (user) {
+                    // id token claims
+                    const id_token_claims = {
+                        iss: `https://${process.env.HOST}:${process.env.PORT}`,
+                        sub: data.user_id,
+                        aud: [
+                            data.client_id,
+                        ],
+                        exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
+                        iat: Math.floor(Date.now() / 1000),
+                        user
+                    }
+                    const keyPair = helpers.Generator.generateKeyPair()
+                    id_token_pub_key = keyPair.publicKey
+                    id_token = helpers.JWT.genAccessToken(id_token_claims, keyPair.privateKey)
+                }
+            }
+        } else if (data.grant_type != null && data.grant_type == 'authorization_code') {
+            if (data.code == null ||
+                data.redirect_uri == null ||
+                data.client_id == null)
+                return responseTrait.ResponseInvalid(res)
+        
+            // get code for checking
+            const dataFromCode = helpers.Generator.getDataFromCode(data.code) ? helpers.Generator.getDataFromCode(data.code) : undefined
+    
+            const code = await codeService.getAuthCode(dataFromCode?.client_id, dataFromCode?.user_id)
+        
+            if (!code)
+                return responseTrait.Response(res, 400, "authorization code not found!", null)
+        
+            if (code != data.code) {
+                return responseTrait.Response(res, 400, "authorization code invalid!", null)
+            } else {
+                await codeService.removeAuthCode(dataFromCode.client_id, dataFromCode.user_id)
+            }
+    
+            if (data.redirect_uri != dataFromCode?.redirect_uri) {
+                return responseTrait.Response(res, 400, "redirect url invalid!", null)
+            }
+            
+            // create id token jwt payload
+            if (dataFromCode.scope != undefined && dataFromCode.scope.includes("openid")) {
+                // call to identity module to get user
+                const user = await getUser(dataFromCode.user_id)
+    
+                if (user) {
+                    // id token claims
+                    const id_token_claims = {
+                        iss: `https://${process.env.HOST}:${process.env.PORT}`,
+                        sub: data.user_id,
+                        aud: [
+                            data.client_id,
+                        ],
+                        exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
+                        iat: Math.floor(Date.now() / 1000),
+                        user
+                    }
+                    const  keyPair  = helpers.Generator.generateKeyPair()
+                    id_token_pub_key = keyPair.publicKey
+                    id_token = helpers.JWT.genAccessToken(id_token_claims, keyPair.privateKey)
+                }
+            }
+    
+            // create scope
+            scope = await getScope(dataFromCode.user_id, dataFromCode.scope)
+            user_id = dataFromCode.user_id
+        } else {
+            return responseTrait.ResponseInvalid(res)
         }
-
-        // create scope
-        scope = await getScope(dataFromCode.user_id, dataFromCode.scope)
-        user_id = dataFromCode.user_id
-    } else {
-        return responseTrait.ResponseInvalid(res)
+    
+        // create access token
+        jti = otpGenerator.generate(10, {
+            lowerCaseAlphabets: true,
+            upperCaseAlphabets: true,
+            specialChars: false,
+        })
+        const access_token_claims = {
+            iss: `https://${process.env.HOST}:${process.env.PORT}`,
+            exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
+            aud: [
+                data.client_id,
+            ],
+            sub: user_id,
+            client_id: data.client_id,
+            scope: scope,
+            iat: Math.floor(Date.now() / 1000),
+            jti: jti,
+        }
+        // public key và private key
+        const accessKeyPair = helpers.Generator.generateKeyPair()
+        const refreshKeyPair = helpers.Generator.generateKeyPair()
+    
+        access_token = helpers.JWT.genAccessToken(access_token_claims, accessKeyPair.privateKey)
+        refresh_token = helpers.JWT.genAccessToken({
+            openid: id_token !== '', 
+            scope: scope,
+            jti: jti,
+        }, refreshKeyPair.privateKey)
+    
+        await tokenService.savePublicKey(accessKeyPair.publicKey, jti, user_id, process.env.TOKEN_EXP)
+        await tokenService.saveRefreshToken(refreshKeyPair.publicKey, jti, user_id, process.env.REFRESH_TOKEN_EXP)
+    
+        return responseTrait.ResponseSuccess(res, {
+            access_token: access_token,
+            token_type: 'Bearer',
+            expires_in: process.env.TOKEN_EXP,
+            refresh_token: refresh_token,
+            openid: {
+                id_token: id_token,
+                id_token_pub_key: id_token_pub_key,
+            },
+        })
+    } catch (error) {
+        console.log(error)
+        return responseTrait.ResponseInternalServer(res)
     }
-
-    // create access token jwt payload + cần thêm claims về scopes
-    const access_token_claims = {
-        iss: `https://${process.env.HOST}:${process.env.PORT}`,
-        exp: Math.floor(Date.now() / 1000) + parseInt(process.env.TOKEN_EXP),
-        aud: [
-            data.client_id,
-        ],
-        sub: user_id,
-        client_id: data.client_id,
-        scope: scope,
-        iat: Math.floor(Date.now() / 1000),
-        jti: 'jwtid'
-    }
-    // public key và private key
-    const { publicKey, privateKey } = helpers.Generator.generateKeyPair()
-
-    access_token = helpers.JWT.genAccessToken(access_token_claims, privateKey)
-    refresh_token = helpers.JWT.genAccessToken({
-        string: randomstring.generate(30),
-        openid: {
-            id_token: id_token,
-            id_token_pub_key: id_token_pub_key,
-        },
-    }, privateKey)
-
-    await tokenService.savePublicKey(publicKey, data.client_id, user_id)
-    await tokenService.saveRefreshToken(refresh_token, data.client_id, user_id)
-
-    return responseTrait.ResponseSuccess(res, {
-        access_token: access_token,
-        token_type: 'Bearer',
-        expires_in: process.env.TOKEN_EXP,
-        refresh_token: refresh_token,
-        openid: {
-            id_token: id_token,
-            id_token_pub_key: id_token_pub_key,
-        },
-    })
 }
 
 exports.logout = async (req, res) => {
     const data = req.body
     try {
-        await tokenService.destroyAccessToken(data.client_id, data.user_id)
-        await tokenService.destroyRefreshToken(data.client_id, data.user_id)
+        // const authorization = req.get('Authorization')
+        const authorization = data.Authorization
+        let arr = authorization.split(" ")
+        const access_token = arr[1];
+        const decoded = jwt.decode(access_token)
+
+        await tokenService.destroyAccessToken(decoded.jti, decoded.sub)
+        await tokenService.destroyRefreshToken(decoded.jti, decoded.sub)
+
+        return responseTrait.ResponseSuccess(res, null)
+    } catch (error) {
+        console.log(error)
+        return responseTrait.ResponseInternalServer(res)
+    }
+}
+
+exports.logoutAll = async (req, res) => {
+    const data = req.body
+    try {
+        // const authorization = req.get('Authorization')
+        const authorization = data.Authorization
+        let arr = authorization.split(" ")
+        const access_token = arr[1];
+        const decoded = jwt.decode(access_token)
+
+        await tokenService.destroyAllKey(decoded.sub)
 
         return responseTrait.ResponseSuccess(res, null)
     } catch (error) {

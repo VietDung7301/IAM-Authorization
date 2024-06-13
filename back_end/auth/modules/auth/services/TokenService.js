@@ -1,22 +1,23 @@
 const { client } = require("../../../helpers/redis")
 
-exports.savePublicKey = async (publicKey, client_id, user_id) => {
+exports.savePublicKey = async (publicKey, jti, user_id, exp = 600) => {
     try {
-        const key = client_id + '@' + user_id + 'AccessToken'
+        const key = jti + '@' + user_id + 'AccessToken'
         const content = {
             publicKey: publicKey
         }
 
         await client.set(key, JSON.stringify(content))
+        await client.expire(key, parseInt(exp))
     } catch (error) {
         console.log(error)
         return false
     }
 }
 
-exports.getPublicKey = async (client_id, user_id) => {
+exports.getPublicKey = async (jti, user_id) => {
     try {
-        const key = client_id + '@' + user_id + 'AccessToken'
+        const key = jti + '@' + user_id + 'AccessToken'
         const value = await client.get(key)
         const content = JSON.parse(value)
 
@@ -30,9 +31,9 @@ exports.getPublicKey = async (client_id, user_id) => {
     }
 }
 
-exports.destroyAccessToken = async (client_id, user_id) => {
+exports.destroyAccessToken = async (jti, user_id) => {
     try {
-        const key = client_id + '@' + user_id + 'AccessToken'
+        const key = jti + '@' + user_id + 'AccessToken'
 
         await client.del(key)
         return true
@@ -42,9 +43,9 @@ exports.destroyAccessToken = async (client_id, user_id) => {
     }
 }
 
-exports.destroyRefreshToken = async (client_id, user_id) => {
+exports.destroyRefreshToken = async (jti, user_id) => {
     try {
-        const key = client_id + '@' + user_id + 'RefreshToken'
+        const key = jti + '@' + user_id + 'RefreshToken'
 
         await client.del(key)
         return true
@@ -54,23 +55,24 @@ exports.destroyRefreshToken = async (client_id, user_id) => {
     }
 }
 
-exports.saveRefreshToken = async (refresh_token, client_id, user_id) => {
+exports.saveRefreshToken = async (refresh_token, jti, user_id, exp = 604800) => {
     try {
-        const key = client_id + '@' + user_id + 'RefreshToken'
+        const key = jti + '@' + user_id + 'RefreshToken'
         const content = {
             token: refresh_token,
         }
 
         await client.set(key, JSON.stringify(content))
+        await client.expire(key, parseInt(exp))
     } catch (error) {
         console.log(error)
         return false
     }
 }
 
-exports.getRefreshToken = async (client_id, user_id) => {
+exports.getRefreshToken = async (jti, user_id) => {
     try {
-        const key = client_id + '@' + user_id + 'RefreshToken'
+        const key = jti + '@' + user_id + 'RefreshToken'
         const value = await client.get(key)
         const content = JSON.parse(value)
 
@@ -78,6 +80,38 @@ exports.getRefreshToken = async (client_id, user_id) => {
             return false
 
         return content.token
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
+// for avoid ddos purpose
+exports.countKeyNumber = async (user_id) => {
+    try {
+        const arrOfRefreshKey = await client.keys(`*@${user_id}RefreshToken`)
+
+        return arrOfRefreshKey.length
+    } catch (error) {
+        console.log(error)
+        return 0
+    }
+}
+
+exports.destroyAllKey = async (user_id) => {
+    try {
+        // delete all refresh key
+        const arrOfRefreshKey = await client.keys(`*@${user_id}RefreshToken`)
+        arrOfRefreshKey.forEach(async (key) => {
+            await client.del(key)
+        })
+
+        const arrOfAccessKey = await client.keys(`*@${user_id}AccessToken`)
+        arrOfAccessKey.forEach(async (key) => {
+            await client.del(key)
+        })
+
+        return true
     } catch (error) {
         console.log(error)
         return false

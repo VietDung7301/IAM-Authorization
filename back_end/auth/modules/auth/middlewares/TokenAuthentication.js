@@ -13,7 +13,7 @@ exports.Handle = async (req, res, next) => {
         const access_token = arr[1];
         try {
             const decoded = jwt.decode(access_token)
-            const public_key = await tokenService.getPublicKey(decoded.jti, decoded.sub)
+            const public_key = await tokenService.getAccessKey(decoded.jti, decoded.sub)
             jwt.verify(access_token, public_key)
         } catch (error) {
             console.log(error)

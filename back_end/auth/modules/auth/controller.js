@@ -59,7 +59,7 @@ exports.tokenGrant = async (req, res) => {
             
             let openid = false
             const unverifiedDecoded = jwt.decode(data.refresh_token)
-            const refreshPubKey = await tokenService.getRefreshToken(unverifiedDecoded?.jti, data.user_id)
+            const refreshPubKey = await tokenService.getRefreshKey(unverifiedDecoded?.jti, data.user_id)
             
             try {
                 jwt.verify(data.refresh_token, refreshPubKey, function(err, decoded) {
@@ -182,8 +182,8 @@ exports.tokenGrant = async (req, res) => {
             jti: jti,
         }, refreshKeyPair.privateKey)
     
-        await tokenService.savePublicKey(accessKeyPair.publicKey, jti, user_id, process.env.TOKEN_EXP)
-        await tokenService.saveRefreshToken(refreshKeyPair.publicKey, jti, user_id, process.env.REFRESH_TOKEN_EXP)
+        await tokenService.saveAccessKey(accessKeyPair.publicKey, jti, user_id, process.env.TOKEN_EXP)
+        await tokenService.saveRefreshKey(refreshKeyPair.publicKey, jti, user_id, process.env.REFRESH_TOKEN_EXP)
     
         return responseTrait.ResponseSuccess(res, {
             access_token: access_token,

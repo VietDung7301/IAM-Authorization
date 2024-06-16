@@ -1,6 +1,6 @@
 const { client } = require("../../../helpers/redis")
 
-exports.savePublicKey = async (publicKey, jti, user_id, exp = 600) => {
+exports.saveAccessKey = async (publicKey, jti, user_id, exp = 600) => {
     try {
         const key = jti + '@' + user_id + 'AccessToken'
         const content = {
@@ -15,7 +15,7 @@ exports.savePublicKey = async (publicKey, jti, user_id, exp = 600) => {
     }
 }
 
-exports.getPublicKey = async (jti, user_id) => {
+exports.getAccessKey = async (jti, user_id) => {
     try {
         const key = jti + '@' + user_id + 'AccessToken'
         const value = await client.get(key)
@@ -55,11 +55,11 @@ exports.destroyRefreshToken = async (jti, user_id) => {
     }
 }
 
-exports.saveRefreshToken = async (refresh_token, jti, user_id, exp = 604800) => {
+exports.saveRefreshKey = async (publicKey, jti, user_id, exp = 604800) => {
     try {
         const key = jti + '@' + user_id + 'RefreshToken'
         const content = {
-            token: refresh_token,
+            publicKey: publicKey,
         }
 
         await client.set(key, JSON.stringify(content))
@@ -70,7 +70,7 @@ exports.saveRefreshToken = async (refresh_token, jti, user_id, exp = 604800) => 
     }
 }
 
-exports.getRefreshToken = async (jti, user_id) => {
+exports.getRefreshKey = async (jti, user_id) => {
     try {
         const key = jti + '@' + user_id + 'RefreshToken'
         const value = await client.get(key)
@@ -79,7 +79,7 @@ exports.getRefreshToken = async (jti, user_id) => {
         if (content == null)
             return false
 
-        return content.token
+        return content.publicKey
     } catch (error) {
         console.log(error)
         return false

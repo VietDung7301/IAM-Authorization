@@ -2,49 +2,14 @@ const clientService = require("./services/ClientService");
 const codeService = require("./services/CodeService")
 const tokenService = require("./services/TokenService")
 const markedUserService = require("./services/MarkedUserService")
+const userService = require('./services/UserService')
+const scopeService = require('./services/ScopeService')
 const helpers = require('../../helpers');
 const randomstring = require("randomstring");
 const jwt = require('jsonwebtoken')
 const axios = require('axios');
 const responseTrait = require('../../traits/responseTrait')
 const otpGenerator = require('otp-generator')
-
-const getUser = async (user_id) => {
-    try {
-        const {data} = await axios.get(`${process.env.IDEN_URL}/api/iden/user/${user_id}`)
-        return data.data.user
-    } catch (error) {
-        console.log(error)
-        return false
-    }
-}
-
-const getScope = async (user_id, scopes) => {
-    // gọi role module để lấy scope
-    const user = await getUser(user_id)
-    if (!user)
-        return ""
-    
-    if (!scopes)
-        return ""
-    
-    try {
-        const {data} = await axios.get(`${process.env.ROLE_URL}/api/get-scopes-from-role/${user.role_id}`)
-        const req_scopes = scopes.split(' ')
-
-        let valid_scopes = ''
-
-        for (const req_scope of req_scopes) {
-            if (data.data.scopes.includes(req_scope))
-                valid_scopes = valid_scopes + req_scope + ' '
-        }
-
-        return valid_scopes.trim()
-    } catch (error) {
-        console.log(error)
-        return ""
-    }
-}
 
 exports.authCodeGrant = async (req, res) => {
     try {
@@ -116,7 +81,7 @@ exports.tokenGrant = async (req, res) => {
             // generate id token if needed
             user_id = data.user_id
             if (openid) {
-                const user = await getUser(user_id)
+                const user = await userService.getUser(user_id)
                 if (user) {
                     // id token claims
                     const id_token_claims = {
@@ -161,7 +126,7 @@ exports.tokenGrant = async (req, res) => {
             // create id token jwt payload
             if (dataFromCode.scope != undefined && dataFromCode.scope.includes("openid")) {
                 // call to identity module to get user
-                const user = await getUser(dataFromCode.user_id)
+                const user = await userService.getUser(dataFromCode.user_id)
     
                 if (user) {
                     // id token claims
@@ -182,7 +147,7 @@ exports.tokenGrant = async (req, res) => {
             }
     
             // create scope
-            scope = await getScope(dataFromCode.user_id, dataFromCode.scope)
+            scope = await scopeService.getScope(dataFromCode.user_id, dataFromCode.scope)
             user_id = dataFromCode.user_id
         } else {
             return responseTrait.ResponseInvalid(res)

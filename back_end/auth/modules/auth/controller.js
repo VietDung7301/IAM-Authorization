@@ -122,6 +122,12 @@ exports.tokenGrant = async (req, res) => {
             if (data.redirect_uri != dataFromCode?.redirect_uri) {
                 return responseTrait.Response(res, 400, "redirect url invalid!", null)
             }
+
+            // check number of current login devices
+            const maxDevice = process.env.MAX_KEY_FOR_TOKEN || 5
+            if (tokenService.countKeyNumber(dataFromCode.user_id) >= maxDevice) {
+                return responseTrait.Response(res, 400, "reach maximum login devices!", null)
+            }
             
             // create id token jwt payload
             if (dataFromCode.scope != undefined && dataFromCode.scope.includes("openid")) {

@@ -1,9 +1,10 @@
-const PermissionService = require("./services/PermissionService")
+const permissionService = require("./services/PermissionService")
+const scopeService = require("./services/ScopeService")
 const responseTrait = require('../../traits/responseTrait')
 
 exports.getScopesFromRoleId = async (req, res) => {
     const roleId = req.params.roleId
-    const scopes = await PermissionService.getScopesFromRoleId(roleId)
+    const scopes = await scopeService.getScopesFromRoleId(roleId)
 
     return responseTrait.ResponseSuccess(res, {
         scopes: scopes ? scopes : ''
@@ -29,7 +30,7 @@ exports.checkPermission = async (req, res) => {
         }
     
         return responseTrait.ResponseSuccess(res, {
-            check: await PermissionService.checkPermission(config)
+            check: await permissionService.checkPermission(config)
         })
     } catch (error) {
         console.log(error)

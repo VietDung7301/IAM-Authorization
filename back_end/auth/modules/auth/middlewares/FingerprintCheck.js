@@ -1,6 +1,6 @@
 const axios = require('axios');
 const responseTrait = require('../../../traits/responseTrait')
-const markedUserService = require('../services/MarkedUserService')
+const userMarkerService = require('../services/UserMarkerService')
 
 exports.Handle = async (req, res, next) => {
     console.log('fingerprint check')
@@ -9,19 +9,19 @@ exports.Handle = async (req, res, next) => {
     const fingerprint = data.fingerprint
 
     if (!fingerprint) {
-        await markedUserService.markedUser(user_id)
+        await userMarkerService.markedUser(user_id)
     } else {
         // check fingerprint
         const result = await fingerprintValidation(user_id, fingerprint)
         if (!result || result.check == undefined || !result.check) {
-            const marked_user = await markedUserService.getMarkedUser(user_id)
+            const marked_user = await userMarkerService.getMarkedUser(user_id)
             if (marked_user?.is_checked && marked_user?.last_2FA_at == fingerprint) {
                 if (fingerprint) { 
                     await saveFingerprint(fingerprint, user_id) 
                 }
             } else {
                 // create record
-                await markedUserService.markedUser(user_id)
+                await userMarkerService.markedUser(user_id)
             }
         }
     }

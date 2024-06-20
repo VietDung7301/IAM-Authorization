@@ -1,7 +1,7 @@
 const clientService = require("./services/ClientService");
 const codeService = require("./services/CodeService")
 const tokenService = require("./services/TokenService")
-const markedUserService = require("./services/MarkedUserService")
+const userMarkerService = require("./services/UserMarkerService")
 const userService = require('./services/UserService')
 const scopeService = require('./services/ScopeService')
 const helpers = require('../../helpers');
@@ -14,7 +14,7 @@ const otpGenerator = require('otp-generator')
 exports.authCodeGrant = async (req, res) => {
     try {
         const data = req.body
-        const markedUser = await markedUserService.getMarkedUser(data.user_id)
+        const markedUser = await userMarkerService.getMarkedUser(data.user_id)
         // generate code
         const code = helpers.Generator.generateCode({
             user_id: data.user_id,
@@ -252,7 +252,7 @@ exports.sendOtp = async (req, res) => {
         return responseTrait.ResponseInvalid(res)
     }
 
-    const marked_user = await markedUserService.getMarkedUser(user_id)
+    const marked_user = await userMarkerService.getMarkedUser(user_id)
     if (!marked_user || marked_user.is_checked) {
         return responseTrait.ResponseInvalid(res)
     }
@@ -298,7 +298,7 @@ exports.authenticateOtp = async (req, res) => {
         })
         const check  = data.data.check
         if (check) {
-            const unMarkedUser = await markedUserService.unMarkedUser(user_id, fingerprint)
+            const unMarkedUser = await userMarkerService.unMarkedUser(user_id, fingerprint)
             if (!unMarkedUser) {
                 return responseTrait.ResponseInternalServer(res)
             }

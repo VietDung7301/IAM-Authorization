@@ -92,6 +92,14 @@ const initDB = async () => {
             method: 'GET',
             ScopeId: '123',
         },
+        {
+            id: '1234',
+            title: 'permission2',
+            active: 1,
+            accessible_url: 'https://identity-and-access-management.onrender.com/',
+            method: 'GET',
+            ScopeId: '123',
+        },
     ])
 
     // systemDB.close();

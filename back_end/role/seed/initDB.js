@@ -96,7 +96,7 @@ const initDB = async () => {
             id: '1234',
             title: 'permission2',
             active: 1,
-            accessible_url: 'https://identity-and-access-management.onrender.com/',
+            accessible_url: 'https://identity-and-access-management.onrender.com/students',
             method: 'GET',
             ScopeId: '123',
         },

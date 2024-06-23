@@ -95,6 +95,17 @@ const initDB = async () => {
     await sequelize.models.LinkedAccount.bulkCreate([
         {
             user_id: '1',
+            fingerprints: 'fingerprint1,fingerprint2'
+        },
+        {
+            user_id: '2',
+            fingerprints: 'dev1,dev2'
+        },
+    ])
+
+    await sequelize.models.LinkedAccount.bulkCreate([
+        {
+            user_id: '1',
             provider: 'https://accounts.google.com',
             sub: '112847791659824001835'
         },

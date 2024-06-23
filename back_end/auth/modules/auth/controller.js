@@ -125,7 +125,7 @@ exports.tokenGrant = async (req, res) => {
 
             // check number of current login devices
             const maxDevice = process.env.MAX_KEY_FOR_TOKEN || 5
-            if (tokenService.countKeyNumber(dataFromCode.user_id) >= maxDevice) {
+            if (await tokenService.countKeyNumber(dataFromCode.user_id) >= maxDevice) {
                 return responseTrait.Response(res, 400, "reach maximum login devices!", null)
             }
             

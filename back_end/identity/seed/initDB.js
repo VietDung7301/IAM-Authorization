@@ -79,11 +79,11 @@ const initDB = async () => {
             phone_number_verified: 1,
         },
         {
-            id: '1',
+            id: '2',
             role_id: '123',
             username: 'mr.dev',
             password: await bcrypt.hash('123456', parseInt(process.env.SALT_ROUND)),
-            name: 'Dung',
+            name: 'Hoang Anh',
             email: 'anh.lnh194471@sis.hust.edu.vn',
             email_verified: 1,
             birthdate: new Date(),

@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const controller = require('./controller');
 const cors = require('cors');
+const grantCodeController = require('./controllers/GrantCodeController')
+const grantTokenController = require('./controllers/GrantTokenController')
+const otpController = require('./controllers/OtpController')
+const logoutController = require('./controllers/LogoutController')
 const codeReqValidation = require('./middlewares/CodeReqValidation')
 const userValidation = require('./middlewares/UserValidation')
 const linkedAccountValidation = require('./middlewares/LinkedAccountValidation')
@@ -17,17 +20,17 @@ router.post('/api/auth/code', [
             clientValidation.Handle, 
             userValidation.Handle, 
             fingerprintCheck.Handle
-        ], controller.authCodeGrant)
+        ], grantCodeController.authCodeGrant)
 router.post('/api/auth/token', [
             cors(),
             markedUserValidation.Handle, 
             clientAuthentication.Handle
-        ], controller.tokenGrant)
+        ], grantTokenController.tokenGrant)
 // router.post('/api/auth/client', controller.ClientRegistration)
 
-router.post('/api/auth/logout', [cors(), tokenAuthentication.Handle], controller.logout)
+router.post('/api/auth/logout', [cors(), tokenAuthentication.Handle], logoutController.logout)
 
-router.post('/api/auth/logout_all', [cors(), tokenAuthentication.Handle], controller.logoutAll)
+router.post('/api/auth/logout_all', [cors({origin: [process.env.FE_URL],}), tokenAuthentication.Handle], logoutController.logoutAll)
 
 router.post('/api/auth/login/linked_account', [
             cors({origin: [process.env.FE_URL],}),
@@ -35,10 +38,10 @@ router.post('/api/auth/login/linked_account', [
             clientValidation.Handle, 
             linkedAccountValidation.Handle, 
             fingerprintCheck.Handle
-        ], controller.authCodeGrant)
+        ], grantCodeController.authCodeGrant)
 
 //set cors only for frontend
-router.post('/api/auth/otp/send', cors({origin: [process.env.FE_URL],}), controller.sendOtp)
-router.post('/api/auth/otp/authenticate', cors({origin: [process.env.FE_URL],}), controller.authenticateOtp)
+router.post('/api/auth/otp/send', cors({origin: [process.env.FE_URL],}), otpController.sendOtp)
+router.post('/api/auth/otp/authenticate', cors({origin: [process.env.FE_URL],}), otpController.authenticateOtp)
 
 module.exports = router;

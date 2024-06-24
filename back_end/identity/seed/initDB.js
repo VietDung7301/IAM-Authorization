@@ -78,6 +78,29 @@ const initDB = async () => {
             phone_number: '0123456789',
             phone_number_verified: 1,
         },
+        {
+            id: '2',
+            role_id: '123',
+            username: 'mr.dev',
+            password: await bcrypt.hash('123456', parseInt(process.env.SALT_ROUND)),
+            name: 'Hoang Anh',
+            email: 'anh.lnh194471@sis.hust.edu.vn',
+            email_verified: 1,
+            birthdate: new Date(),
+            phone_number: '0123456789',
+            phone_number_verified: 1,
+        },
+    ])
+
+    await sequelize.models.LinkedAccount.bulkCreate([
+        {
+            user_id: '1',
+            fingerprints: 'fingerprint1,fingerprint2'
+        },
+        {
+            user_id: '2',
+            fingerprints: 'dev1,dev2'
+        },
     ])
 
     await sequelize.models.LinkedAccount.bulkCreate([

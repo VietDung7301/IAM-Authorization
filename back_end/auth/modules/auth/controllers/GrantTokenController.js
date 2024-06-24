@@ -1,79 +1,11 @@
-const clientService = require("./services/ClientService");
-const codeService = require("./services/CodeService")
-const tokenService = require("./services/TokenService")
-const markedUserService = require("./services/MarkedUserService")
-const helpers = require('../../helpers');
-const randomstring = require("randomstring");
+const codeService = require("../services/CodeService")
+const tokenService = require("../services/TokenService")
+const userService = require('../services/UserService')
+const scopeService = require('../services/ScopeService')
+const helpers = require('../../../helpers');
 const jwt = require('jsonwebtoken')
-const axios = require('axios');
-const responseTrait = require('../../traits/responseTrait')
+const responseTrait = require('../../../traits/responseTrait')
 const otpGenerator = require('otp-generator')
-
-const getUser = async (user_id) => {
-    try {
-        const {data} = await axios.get(`${process.env.IDEN_URL}/api/iden/user/${user_id}`)
-        return data.data.user
-    } catch (error) {
-        console.log(error)
-        return false
-    }
-}
-
-const getScope = async (user_id, scopes) => {
-    // gọi role module để lấy scope
-    const user = await getUser(user_id)
-    if (!user)
-        return ""
-    
-    if (!scopes)
-        return ""
-    
-    try {
-        const {data} = await axios.get(`${process.env.ROLE_URL}/api/get-scopes-from-role/${user.role_id}`)
-        const req_scopes = scopes.split(' ')
-
-        let valid_scopes = ''
-
-        for (const req_scope of req_scopes) {
-            if (data.data.scopes.includes(req_scope))
-                valid_scopes = valid_scopes + req_scope + ' '
-        }
-
-        return valid_scopes.trim()
-    } catch (error) {
-        console.log(error)
-        return ""
-    }
-}
-
-exports.authCodeGrant = async (req, res) => {
-    try {
-        const data = req.body
-        const markedUser = await markedUserService.getMarkedUser(data.user_id)
-        // generate code
-        const code = helpers.Generator.generateCode({
-            user_id: data.user_id,
-            client_id: data.client_id,
-            scope: data?.scope,
-            redirect_uri: data.redirect_uri,
-            created_at: Math.floor(Date.now() / 1000),
-        })
-
-        // save code for checking
-        await codeService.saveAuthCode(code, data.client_id, data.user_id, process.env.AUTH_CODE_EXP)
-
-        return responseTrait.ResponseSuccess(res, {
-            code: code,
-            user_id: data.user_id,
-            state: data.state == null ? null : data.state,
-            otp: !markedUser || markedUser.is_checked ? false : true,
-        })
-
-    } catch (error) {
-        console.log(error)
-        return responseTrait.ResponseInternalServer(res)
-    }
-}
 
 exports.tokenGrant = async (req, res) => {
     let id_token = ''
@@ -94,7 +26,7 @@ exports.tokenGrant = async (req, res) => {
             
             let openid = false
             const unverifiedDecoded = jwt.decode(data.refresh_token)
-            const refreshPubKey = await tokenService.getRefreshToken(unverifiedDecoded?.jti, data.user_id)
+            const refreshPubKey = await tokenService.getRefreshKey(unverifiedDecoded?.jti, data.user_id)
             
             try {
                 jwt.verify(data.refresh_token, refreshPubKey, function(err, decoded) {
@@ -116,7 +48,7 @@ exports.tokenGrant = async (req, res) => {
             // generate id token if needed
             user_id = data.user_id
             if (openid) {
-                const user = await getUser(user_id)
+                const user = await userService.getUser(user_id)
                 if (user) {
                     // id token claims
                     const id_token_claims = {
@@ -157,11 +89,17 @@ exports.tokenGrant = async (req, res) => {
             if (data.redirect_uri != dataFromCode?.redirect_uri) {
                 return responseTrait.Response(res, 400, "redirect url invalid!", null)
             }
+
+            // check number of current login devices
+            const maxDevice = process.env.MAX_KEY_FOR_TOKEN || 5
+            if (await tokenService.countKeyNumber(dataFromCode.user_id) >= maxDevice) {
+                return responseTrait.Response(res, 400, "reach maximum login devices!", null)
+            }
             
             // create id token jwt payload
             if (dataFromCode.scope != undefined && dataFromCode.scope.includes("openid")) {
                 // call to identity module to get user
-                const user = await getUser(dataFromCode.user_id)
+                const user = await userService.getUser(dataFromCode.user_id)
     
                 if (user) {
                     // id token claims
@@ -182,7 +120,7 @@ exports.tokenGrant = async (req, res) => {
             }
     
             // create scope
-            scope = await getScope(dataFromCode.user_id, dataFromCode.scope)
+            scope = await scopeService.getScope(dataFromCode.user_id, dataFromCode.scope)
             user_id = dataFromCode.user_id
         } else {
             return responseTrait.ResponseInvalid(res)
@@ -217,8 +155,8 @@ exports.tokenGrant = async (req, res) => {
             jti: jti,
         }, refreshKeyPair.privateKey)
     
-        await tokenService.savePublicKey(accessKeyPair.publicKey, jti, user_id, process.env.TOKEN_EXP)
-        await tokenService.saveRefreshToken(refreshKeyPair.publicKey, jti, user_id, process.env.REFRESH_TOKEN_EXP)
+        await tokenService.saveAccessKey(accessKeyPair.publicKey, jti, user_id, process.env.TOKEN_EXP)
+        await tokenService.saveRefreshKey(refreshKeyPair.publicKey, jti, user_id, process.env.REFRESH_TOKEN_EXP)
     
         return responseTrait.ResponseSuccess(res, {
             access_token: access_token,
@@ -229,111 +167,6 @@ exports.tokenGrant = async (req, res) => {
                 id_token: id_token,
                 id_token_pub_key: id_token_pub_key,
             },
-        })
-    } catch (error) {
-        console.log(error)
-        return responseTrait.ResponseInternalServer(res)
-    }
-}
-
-exports.logout = async (req, res) => {
-    const data = req.body
-    try {
-        // const authorization = req.get('Authorization')
-        const authorization = data.Authorization
-        let arr = authorization.split(" ")
-        const access_token = arr[1];
-        const decoded = jwt.decode(access_token)
-
-        await tokenService.destroyAccessToken(decoded.jti, decoded.sub)
-        await tokenService.destroyRefreshToken(decoded.jti, decoded.sub)
-
-        return responseTrait.ResponseSuccess(res, null)
-    } catch (error) {
-        console.log(error)
-        return responseTrait.ResponseInternalServer(res)
-    }
-}
-
-exports.logoutAll = async (req, res) => {
-    const data = req.body
-    try {
-        // const authorization = req.get('Authorization')
-        const authorization = data.Authorization
-        let arr = authorization.split(" ")
-        const access_token = arr[1];
-        const decoded = jwt.decode(access_token)
-
-        await tokenService.destroyAllKey(decoded.sub)
-
-        return responseTrait.ResponseSuccess(res, null)
-    } catch (error) {
-        console.log(error)
-        return responseTrait.ResponseInternalServer(res)
-    }
-}
-
-exports.sendOtp = async (req, res) => {
-    const data = req.body
-    const user_id = data.user_id
-
-    if (!user_id || user_id == '') {
-        return responseTrait.ResponseInvalid(res)
-    }
-
-    const marked_user = await markedUserService.getMarkedUser(user_id)
-    if (!marked_user || marked_user.is_checked) {
-        return responseTrait.ResponseInvalid(res)
-    }
-
-    // call api send otp
-    try {
-        const {data} = await axios.post(`${process.env.IDEN_URL}/api/iden/otp/send`, {
-            user_id: user_id,
-        }, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
-        if (data.status_code != 200) {
-            return responseTrait.Response(res, 502, "send otp failed!", null)  
-        }
-        return responseTrait.ResponseSuccess(res, data.data)
-    } catch (error) {
-        console.log(error)
-        return responseTrait.ResponseInternalServer(res)
-    }
-}
-
-exports.authenticateOtp = async (req, res) => {
-    const data = req.body
-    const user_id = data.user_id
-    const otp = data.otp
-    const fingerprint = data?.fingerprint
-
-    if (!user_id || user_id == '' ||
-        !otp || otp == '') {
-        return responseTrait.ResponseInvalid(res)
-    }
-
-    try {
-        const {data} = await axios.post(`${process.env.IDEN_URL}/api/iden/otp/authen`, {
-            otp: otp,
-            user_id: user_id,
-        }, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
-        const check  = data.data.check
-        if (check) {
-            const unMarkedUser = await markedUserService.unMarkedUser(user_id, fingerprint)
-            if (!unMarkedUser) {
-                return responseTrait.ResponseInternalServer(res)
-            }
-        }
-        return responseTrait.ResponseSuccess(res, {
-            check: check
         })
     } catch (error) {
         console.log(error)

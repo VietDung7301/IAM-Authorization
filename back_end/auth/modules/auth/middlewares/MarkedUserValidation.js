@@ -1,4 +1,4 @@
-const markedUserService = require('../services/MarkedUserService')
+const userMarkerService = require('../services/UserMarkerService')
 const responseTrait = require('../../../traits/responseTrait')
 const helpers = require('../../../helpers')
 
@@ -12,7 +12,7 @@ exports.Handle = async (req, res, next) => {
         user_id = data.user_id
     }
     
-    const marked_user = await markedUserService.getMarkedUser(user_id)
+    const marked_user = await userMarkerService.getMarkedUser(user_id)
     if (marked_user) {
         if (!marked_user.is_checked) {
             return responseTrait.Response(res, 400, "waiting for 2FA", null)

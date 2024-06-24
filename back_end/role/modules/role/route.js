@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const controller = require('./controller');
+const scopeController = require('./controllers/ScopeController')
+const permissionController = require('./controllers/PermissionController')
+const roleController = require('./controllers/RoleController')
 
 // router.use(function(req, res, next) {
 //   res.header("Access-Control-Allow-Origin", process.env.AUTH_URL);
@@ -9,7 +11,7 @@ const controller = require('./controller');
 //   next();
 // });
 
-router.post('/api/permission/check', controller.checkPermission)    // thêm cors
-router.get('/api/get-scopes-from-role/:roleId', controller.getScopesFromRoleId) // thêm cors
+router.post('/api/permission/check', permissionController.checkPermission)
+router.get('/api/get-scopes-from-role/:roleId', scopeController.getScopesFromRoleId)
 
 module.exports = router;

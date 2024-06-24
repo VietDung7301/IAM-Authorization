@@ -38,7 +38,7 @@ router.post('/api/auth/login/linked_account', [
             clientValidation.Handle, 
             linkedAccountValidation.Handle, 
             fingerprintCheck.Handle
-        ], controller.authCodeGrant)
+        ], grantCodeController.authCodeGrant)
 
 //set cors only for frontend
 router.post('/api/auth/otp/send', cors({origin: [process.env.FE_URL],}), otpController.sendOtp)

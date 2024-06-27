@@ -20,28 +20,26 @@ export const useAuthStore = defineStore('auth', {
           stored_id_token.value = id_token
           this.authenticated = true; // set authenticated  state value to true
         },
+      refreshToken() {
+        const access_token = useCookie('access_token');
+        const refresh_token = useCookie('refresh_token');
+        const id_token = useCookie('id_token');
+
+        access_token.value = null;
+        id_token.value = null;
+
+        // Todo refresh token
+        return null
+      },
       async logUserOut(logout_endpoint: string, client_id: string) {
         const access_token = useCookie('access_token');
         const refresh_token = useCookie('refresh_token');
         const id_token = useCookie('id_token');
 
-        const { data, pending }: any = await useFetch(logout_endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams ({
-            user_id: this.user_id,
-            client_id: client_id,
-            Authorization: `Bearer ${access_token.value}`
-          })
-        })
-        if (data.value) {
-          this.authenticated = false; // set authenticated  state value to false
-          access_token.value = null;
-          refresh_token.value = null;
-          id_token.value = null;
-        }
+        this.authenticated = false; // set authenticated  state value to false
+        access_token.value = null;
+        refresh_token.value = null;
+        id_token.value = null;
       },
     },
   });

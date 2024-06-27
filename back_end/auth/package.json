@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "db": "node seed/initDB.js",
-    "build": "yarn db && yarn start"
+    "build": "yarn start"
   },
   "author": "",
   "license": "ISC",

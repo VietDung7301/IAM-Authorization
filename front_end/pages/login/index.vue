@@ -126,16 +126,18 @@ if (access_token.value && access_token.value != null) {
 	console.log('access_token', access_token.value)
 	
 	// let decoded_token = VueJwtDecode.decode(access_token)
-	navigateTo({
-		path: params.redirect_uri, 
-		query: {
-			code1: access_token.value,
-			code2: refresh_token.value,
-			code3: id_token.value
-		}
-	}, {
-		external: true
-	})
+	if (checkClient) {
+		navigateTo({
+			path: params.redirect_uri, 
+			query: {
+				code1: access_token.value,
+				code2: refresh_token.value,
+				code3: id_token.value
+			}
+		}, {
+			external: true
+		})
+	}
 }
 
 

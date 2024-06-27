@@ -1,7 +1,10 @@
 const codeService = require("../services/CodeService")
+const clientService = require('../services/ClientService')
 const userMarkerService = require("../services/UserMarkerService")
 const helpers = require('../../../helpers')
 const responseTrait = require('../../../traits/responseTrait')
+const sequelize = require('sequelize')
+const Op = sequelize.Op
 
 exports.authCodeGrant = async (req, res) => {
     try {
@@ -26,6 +29,27 @@ exports.authCodeGrant = async (req, res) => {
             otp: !markedUser || markedUser.is_checked ? false : true,
         })
 
+    } catch (error) {
+        console.log(error)
+        return responseTrait.ResponseInternalServer(res)
+    }
+}
+
+exports.getClientByRedirectUri = async (req, res) => {
+    try {
+        const query = req.query
+        const redirect_uri = query.redirect_uri
+        const config = {
+            redirect_uri: {
+                [Op.like]: `%${redirect_uri}%`
+            }
+        }
+        const client = await clientService.getClient(config)
+        if (!client)
+            return responseTrait.Response(res, 404, 'client notfound!', null)
+
+        delete client.dataValues.client_secret
+        return responseTrait.ResponseSuccess(res, client)
     } catch (error) {
         console.log(error)
         return responseTrait.ResponseInternalServer(res)

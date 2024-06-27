@@ -44,4 +44,7 @@ router.post('/api/auth/login/linked_account', [
 router.post('/api/auth/otp/send', cors({origin: [process.env.FE_URL],}), otpController.sendOtp)
 router.post('/api/auth/otp/authenticate', cors({origin: [process.env.FE_URL],}), otpController.authenticateOtp)
 
+//get client by redirect_uri
+router.get('/api/auth/client/get_by_redirect_uri', cors({origin: [process.env.FE_URL],}), grantCodeController.getClientByRedirectUri)
+
 module.exports = router;

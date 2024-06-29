@@ -64,6 +64,7 @@
 </template>
   
 <script setup>
+import { onBeforeMount } from 'vue'
 import { ref } from 'vue'
 import OTPModal from '~/components/OTPModal.vue';
 import {GoogleSignInButton,} from "vue3-google-signin";
@@ -74,12 +75,14 @@ let userId = ref('')
 let email = ref('')
 let auth_code = ''
 let visitorId = ref('')
+let checkClient = false
 const { $getVisitorId } = useNuxtApp()
 
 const config = useRuntimeConfig()
 const AUTH_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/code`
 const LINKED_SIGN_IN_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/login/linked_account`
 const REQUEST_OTP_ENDPOINT = `${config.public.AUTH_SERVER}/api/auth/otp/send`
+const GET_CLIENT_PROFILE = `${config.public.AUTH_SERVER}/api/auth/client/get_by_redirect_uri`
 
 // Check if user was logged in
 const params = useRoute().query
@@ -96,20 +99,45 @@ const id_token = useCookie('id_token', {
 	watch: true
 })
 
+onBeforeMount(async () => {
+	// Check is client valid
+	await useFetch(GET_CLIENT_PROFILE, {
+		onRequest({ request, options }) {
+			options.method = 'GET',
+			options.query = {'redirect_uri': params.redirect_uri}
+		},
+		onResponse({ request, response, options }) {
+			if (response.status == 200) {
+				checkClient = true
+			}
+		},
+		onRequestError({ request, response, options }) {
+			if (response.status == 404) {
+				checkClient = false
+			} else {
+				console.log('Check error', response)
+			}
+		}
+	})
+})
+
 
 if (access_token.value && access_token.value != null) {
 	console.log('access_token', access_token.value)
+	
 	// let decoded_token = VueJwtDecode.decode(access_token)
-	navigateTo({
-		path: params.redirect_uri, 
-		query: {
-			code1: access_token.value,
-			code2: refresh_token.value,
-			code3: id_token.value
-		}
-	}, {
-		external: true
-	})
+	if (checkClient) {
+		navigateTo({
+			path: params.redirect_uri, 
+			query: {
+				code1: access_token.value,
+				code2: refresh_token.value,
+				code3: id_token.value
+			}
+		}, {
+			external: true
+		})
+	}
 }
 
 

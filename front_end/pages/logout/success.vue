@@ -34,9 +34,6 @@
 </template>
 
 <script setup>
-definePageMeta({
-	middleware: ["logout"]
-})
 const params = useRoute().query
 
 const redirectToOriginal = () => {

@@ -39,8 +39,10 @@ exports.unMarkedUser = async (user_id, fingerprint) => {
             checked_at: Math.round(new Date().getTime()/1000),
             last_2FA_at: fingerprint,
         }
+        const exp = process.env.UNMARKED_EXP || 604800
 
         await client.set(key, JSON.stringify(content))
+        await client.expire(key, parseInt(exp))
         return true
     } catch (error) {
         console.log(error)

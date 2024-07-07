@@ -44,6 +44,8 @@
 </template>
 
 <script setup lang="js">
+import { useAuthStore } from '~/store/auth'
+const { refreshToken, logUserOut } = useAuthStore()
 const config = useRuntimeConfig()
 const access_token = useCookie('access_token', {
 	default: () => {},
@@ -67,11 +69,20 @@ const { data, error } = await useFetch(config.public.RESOURCE_ENDPOINT,
 							})
 		},
 		onResponseError({ request, response, options }) {
-			console.log('error roiiii: ', response)
+            console.log('message', response._data.message)
+			if (response._data.message === 'token expired!') {
+                let newToken = refreshToken()
+                if (!newToken) {
+                    logUserOut()
+                    navigateTo('/login')
+                }
+            }
 		},
 		onResponse({ request, response, options }) {
-			console.log('Resource response: ', response._data.data)
-            studentList = response._data.Data.data.student_list
+            if (response.status == 200) {
+                console.log('Resource response: ', response)
+                studentList = response._data.data.data.student_list
+            }
 		},
 	})
 </script>

@@ -3,6 +3,8 @@ package ipgeo
 import (
 	"access/helpers/jwtparse"
 	"access/helpers/responses"
+	"os"
+	"strconv"
 
 	"context"
 	"encoding/json"
@@ -62,7 +64,11 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 				}
 				json.Unmarshal([]byte(val), &markedUserData)
 				// nên set valid time ở env | default = 1 day
-				if markedUserData.Is_checked == 1 && (markedUserData.Checked_at+86400) > time.Now().Unix() {
+				cooldownTime, err := strconv.Atoi(os.Getenv("COOLDOWN_TIME"))
+				if err != nil {
+					cooldownTime = 86400
+				}
+				if markedUserData.Is_checked == 1 && (markedUserData.Checked_at+int64(cooldownTime)) > time.Now().Unix() {
 					fmt.Printf("ip geo mdw out\n")
 					next.ServeHTTP(w, r)
 					return

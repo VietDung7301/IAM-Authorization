@@ -117,5 +117,15 @@ func rateLimit(user_id string, redisClient *redis.Client) bool {
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
 	}
+
+	expire, err := strconv.Atoi(os.Getenv("RATE_DATA_EXPIRE"))
+	if err != nil {
+		expire = 86400
+	}
+	err = redisClient.Expire(ctx, redisKey, time.Duration(expire)*time.Second).Err()
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+	}
+
 	return check
 }

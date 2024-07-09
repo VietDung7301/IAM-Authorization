@@ -68,13 +68,33 @@ const { data, error } = await useFetch(config.public.RESOURCE_ENDPOINT,
                                 content_type: 'application/json',
 							})
 		},
-		onResponseError({ request, response, options }) {
+		async onResponseError({ request, response, options }) {
             console.log('message', response._data.message)
 			if (response._data.message === 'token expired!') {
-                let newToken = refreshToken()
+                let newToken = await refreshToken(
+                    config.public.TOKEN_ENDPOINT, 
+                    config.public.AUTH_SCOPES, 
+                    config.public.CLIENT_ID,
+                    config.public.CLIENT_SECRET
+                )
                 if (!newToken) {
                     logUserOut()
                     navigateTo('/login')
+                } else {
+                    const { data } = await useFetch(config.public.RESOURCE_ENDPOINT,{
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${newToken}`
+                        },
+                        body: new URLSearchParams({
+								method: 'GET',
+                                url: config.public.EX_RESOURCE_1,
+                                content_type: 'application/json',
+							})
+                    })
+                    if (data.value) {
+                        studentList = data.value.data.data.student_list
+                    }
                 }
             }
 		},

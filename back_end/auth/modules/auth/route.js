@@ -35,7 +35,7 @@ router.post('/api/auth/token', [
 
 router.post('/api/auth/logout', [cors(), tokenAuthentication.Handle], logoutController.logout)
 
-router.post('/api/auth/logout_all', [cors({origin: process.env.FE_URL,}), tokenAuthentication.Handle], logoutController.logoutAll)
+router.post('/api/auth/logout_all', [cors({origin: process.env.FE_URL}), tokenAuthentication.Handle], logoutController.logoutAll)
 
 router.post('/api/auth/login/linked_account', [
             cors({origin: process.env.FE_URL,}),

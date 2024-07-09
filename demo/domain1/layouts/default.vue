@@ -65,7 +65,7 @@
 	const navItems = ref([
 		{ link: '/', title: 'Home' },
 		{ link: '/students', title: 'Manage students' },
-		{ link: '#', title: 'Features' },
+		{ link: '/profile', title: 'Profile' },
 		{ link: '#', title: 'FAQ' },
 		{ link: '#', title: 'Contact' }
 	])

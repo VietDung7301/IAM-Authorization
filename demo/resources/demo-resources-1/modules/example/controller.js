@@ -107,3 +107,32 @@ exports.getStudents = async (req, res) => {
 		}
 	})
 }
+
+exports.getStudentById = async (req, res) => {
+	let id = req.params.id
+	if (id == '1') {
+		res.status(200).json({
+			name: 'Hoàng Việt Dũng',
+			date_of_birth: '01-01-2001',
+			email: 'dung.hv190092@sis.hust.edu.vn',
+			phone_number: '0123456789',
+			sex: 'male',
+			cpa: '3.00',
+			address: 'Mỹ Hào, Hưng Yên',
+			profile_picture: 'https://lh3.googleusercontent.com/a/ACg8ocJfEhyMsLFgxNOPsQks7C5GvBGTul1YU-Nunh8MfkYyi0MxxFHS=s360-c-no',
+			cover_picture: 'https://i.pinimg.com/736x/9e/1a/a6/9e1aa6905e2b8cdf40fec166972d2836.jpg'
+		})
+	} else {
+		res.status(200).json({
+			name: 'Lương Nguyễn Hoàng Anh',
+			date_of_birth: '02-02-2001',
+			email: 'anh.lnh190000@sis.hust.edu.vn',
+			phone_number: '0987654321',
+			sex: 'male',
+			cpa: '3.99',
+			address: 'Hai Bà Trưng, Hà Nội',
+			profile_picture: 'https://scontent.fhan18-1.fna.fbcdn.net/v/t1.6435-9/49271337_2318600335038588_8426942601751429120_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=1d70fc&_nc_eui2=AeFLltoD4cXzgFDIWEB5MEhP0BJRP54XKHDQElE_nhcocLraPlfh6XetFWxdHTNnbo9xgSqRqrcT7c5WG6zDqVFe&_nc_ohc=rEQY3xwsn50Q7kNvgGMgsQi&_nc_ht=scontent.fhan18-1.fna&oh=00_AYB6IbyOWyQj1Eog2XZy_gev2tOp_R3GaF2e29yRmOKjbA&oe=66B4A0AE',
+			cover_picture: 'https://scontent.fhan18-1.fna.fbcdn.net/v/t1.6435-9/101225983_2733741326857818_4222293610378297344_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=2a1932&_nc_eui2=AeHCb_lJ5wyT-badH2xJnlyqQkUR5t3SoLhCRRHm3dKguBOu0w3-tvVMgeMbTgY4loafrLMCKbCiT5plwaxesVnc&_nc_ohc=EcMdFtXgc6wQ7kNvgEtxf4I&_nc_ht=scontent.fhan18-1.fna&oh=00_AYD6wrf_ObKVr8lx8-80nzgRjNX6c3-xpr9WgU_gZUuicg&oe=66B48349'
+		})
+	}
+}

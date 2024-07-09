@@ -4,13 +4,24 @@ from django.db import models
 class Fingerprint(models.Model):
     user = models.OneToOneField('User', models.DO_NOTHING, primary_key=True)
     fingerprints = models.CharField(max_length=255, blank=True, null=True)
-
-    def __str__(self):
-        return self.user.username
+    createdat = models.DateTimeField(db_column='createdAt')  # Field name made lowercase.
+    updatedat = models.DateTimeField(db_column='updatedAt')  # Field name made lowercase.
 
     class Meta:
         managed = False
-        db_table = 'fingerprints'
+        db_table = 'Fingerprints'
+
+
+class Linkedaccount(models.Model):
+    user = models.OneToOneField('User', models.DO_NOTHING, primary_key=True)
+    provider = models.CharField(max_length=255)
+    sub = models.CharField(max_length=255)
+    createdat = models.DateTimeField(db_column='createdAt')  # Field name made lowercase.
+    updatedat = models.DateTimeField(db_column='updatedAt')  # Field name made lowercase.
+
+    class Meta:
+        managed = False
+        db_table = 'LinkedAccounts'
 
 
 class Otp(models.Model):
@@ -19,20 +30,19 @@ class Otp(models.Model):
     otp = models.IntegerField()
     is_used = models.IntegerField()
     expires = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.user.username
+    createdat = models.DateTimeField(db_column='createdAt')  # Field name made lowercase.
+    updatedat = models.DateTimeField(db_column='updatedAt')  # Field name made lowercase.
 
     class Meta:
         managed = False
-        db_table = 'otps'
+        db_table = 'Otps'
         unique_together = (('user', 'type'),)
 
 
 class User(models.Model):
     id = models.CharField(primary_key=True, max_length=255)
     role_id = models.IntegerField()
-    username = models.CharField(max_length=255)
+    username = models.CharField(unique=True, max_length=255)
     password = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     given_name = models.CharField(max_length=255, blank=True, null=True)
@@ -51,10 +61,9 @@ class User(models.Model):
     phone_number = models.CharField(max_length=255)
     phone_number_verified = models.IntegerField()
     address = models.CharField(max_length=255, blank=True, null=True)
-
-    def __str__(self):
-        return self.username
+    createdat = models.DateTimeField(db_column='createdAt')  # Field name made lowercase.
+    updatedat = models.DateTimeField(db_column='updatedAt')  # Field name made lowercase.
 
     class Meta:
         managed = False
-        db_table = 'users'
+        db_table = 'Users'

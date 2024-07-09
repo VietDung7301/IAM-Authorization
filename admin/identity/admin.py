@@ -1,7 +1,15 @@
 from django.contrib import admin
-from .models import User, Otp, Fingerprint
+from .models import User, Linkedaccount
 
 
-admin.site.register(User)
-admin.site.register(Otp)
-admin.site.register(Fingerprint)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['id', 'role_id', 'username', 'name', 'phone_number']
+    exclude = ['password']
+
+
+class LinkedaccountAdmin(admin.ModelAdmin):
+    list_display = ['user', 'provider', 'sub']
+
+
+admin.site.register(User, UserAdmin)
+admin.site.register(Linkedaccount, LinkedaccountAdmin)

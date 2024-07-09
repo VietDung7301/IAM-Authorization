@@ -41,7 +41,7 @@
 						<button class="text-center w-full px-4 py-2 border flex gap-2 border-slate-200 rounded-lg hover:border-slate-400 hover:shadow transition duration-150"
 										@click="handle_iam_sign_on">
 							<img class="w-6 h-auto mr-4" src="/logo_hust.png" alt="logo">
-							<span>Login with HUST-IAM's account</span>
+							<span>Login with SSO's account</span>
 						</button>
 					</form>
 				</div>

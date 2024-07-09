@@ -9,6 +9,8 @@ class Router:
             return 'role'
         elif model._meta.app_label == 'identity':
             return 'identity'
+        elif model._meta.app_label == 'access':
+            return 'access'
         return 'authorization'
 
     def db_for_write(self, model, **hints):
@@ -17,6 +19,8 @@ class Router:
             return 'role'
         elif model._meta.app_label == 'identity':
             return 'identity'
+        elif model._meta.app_label == 'access':
+            return 'access'
         return 'authorization'
 
     def allow_relation(self, obj1, obj2, **hints):

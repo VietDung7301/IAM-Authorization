@@ -45,7 +45,8 @@ INSTALLED_APPS = [
 
     'authorization.apps.AuthorizationConfig',
     'identity.apps.IdentityConfig',
-    'role.apps.RoleConfig'
+    'role.apps.RoleConfig',
+    'access.apps.AccessConfig'
 ]
 
 MIDDLEWARE = [
@@ -114,6 +115,14 @@ DATABASES = {
         'PASSWORD': os.getenv('ROLE_DB_PASSWORD'),
         'HOST': os.getenv('ROLE_DB_HOST'),
         'PORT': os.getenv('ROLE_DB_PORT'),
+    },
+    'access': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('ACCESS_DB_NAME'),
+        'USER': os.getenv('ACCESS_DB_USER'),
+        'PASSWORD': os.getenv('ACCESS_DB_PASSWORD'),
+        'HOST': os.getenv('ACCESS_DB_HOST'),
+        'PORT': os.getenv('ACCESS_DB_PORT'),
     },
 }
 

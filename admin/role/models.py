@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class Permissions(models.Model):
+class Permission(models.Model):
     id = models.IntegerField(primary_key=True)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -17,7 +17,7 @@ class Permissions(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'permissions'
+        db_table = 'Permissions'
 
 
 class RoleScope(models.Model):
@@ -48,7 +48,7 @@ class Role(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'roles'
+        db_table = 'Roles'
 
 
 class Scope(models.Model):
@@ -64,5 +64,5 @@ class Scope(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'scopes'
+        db_table = 'Scopes'
 

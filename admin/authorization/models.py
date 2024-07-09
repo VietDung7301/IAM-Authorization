@@ -24,4 +24,4 @@ class Client(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'clients'
+        db_table = 'Clients'

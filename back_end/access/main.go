@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 
 	"access/helpers/jsonparse"
+	"access/helpers/mysqlconn"
 	"access/helpers/redisconn"
 	"access/helpers/responses"
 
@@ -24,6 +26,7 @@ import (
 )
 
 var redisClient *redis.Client
+var mysqlInstance *sql.DB
 
 type RequestBody struct {
 	Method       string
@@ -38,8 +41,12 @@ func main() {
 		fmt.Printf("Error loading .env file - main\n")
 	}
 
+	// redis conn instance
 	ctx := context.TODO()
 	redisClient = redisconn.ConnectRedis(ctx)
+
+	// mysql conn instance
+	mysqlInstance = mysqlconn.ConnectMySQL()
 
 	r := mux.NewRouter()
 
@@ -54,7 +61,8 @@ func main() {
 		//
 	}
 	igmw := ipgeo.IpGeoMiddleware{
-		RedisClient: redisClient,
+		RedisClient:   redisClient,
+		MysqlInstance: mysqlInstance,
 	}
 
 	// use middleware

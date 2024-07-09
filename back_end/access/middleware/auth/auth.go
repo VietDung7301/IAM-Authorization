@@ -47,7 +47,17 @@ func verifyAccessToken(tokenString string, redisClient *redis.Client) jwt.MapCla
 
 	if claims != nil {
 		// get public key
-		redisKey := fmt.Sprintf("%s@%sAccessToken", claims["jti"].(string), claims["sub"].(string))
+		jti := claims["jti"]
+		if jti == nil {
+			fmt.Printf("token invalid!")
+			return nil
+		}
+		sub := claims["sub"]
+		if sub == nil {
+			fmt.Printf("token invalid!")
+			return nil
+		}
+		redisKey := fmt.Sprintf("%s@%sAccessToken", jti.(string), sub.(string))
 		ctx := context.Background()
 		val, err := redisClient.Get(ctx, redisKey).Result()
 		if err != nil {

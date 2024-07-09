@@ -5,8 +5,8 @@ const responseTrait = require('../../../traits/responseTrait')
 exports.logout = async (req, res) => {
     const data = req.body
     try {
-        // const authorization = req.get('Authorization')
-        const authorization = data.Authorization
+        const authorization = req.get('Authorization')
+        // const authorization = data.Authorization
         let arr = authorization.split(" ")
         const access_token = arr[1];
         const decoded = jwt.decode(access_token)
@@ -24,8 +24,8 @@ exports.logout = async (req, res) => {
 exports.logoutAll = async (req, res) => {
     const data = req.body
     try {
-        // const authorization = req.get('Authorization')
-        const authorization = data.Authorization
+        const authorization = req.get('Authorization')
+        // const authorization = data.Authorization
         let arr = authorization.split(" ")
         const access_token = arr[1];
         const decoded = jwt.decode(access_token)

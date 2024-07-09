@@ -38,7 +38,7 @@ router.post('/api/auth/logout', [cors(), tokenAuthentication.Handle], logoutCont
 router.post('/api/auth/logout_all', [cors({origin: process.env.FE_URL}), tokenAuthentication.Handle], logoutController.logoutAll)
 
 router.post('/api/auth/login/linked_account', [
-            cors({origin: [process.env.FE_URL],}),
+            cors({origin: process.env.FE_URL,}),
             codeReqValidation.Handle, 
             clientValidation.Handle, 
             linkedAccountValidation.Handle, 
@@ -46,10 +46,10 @@ router.post('/api/auth/login/linked_account', [
         ], grantCodeController.authCodeGrant)
 
 //set cors only for frontend
-router.post('/api/auth/otp/send', cors({origin: [process.env.FE_URL],}), otpController.sendOtp)
-router.post('/api/auth/otp/authenticate', cors({origin: [process.env.FE_URL],}), otpController.authenticateOtp)
+router.post('/api/auth/otp/send', cors({origin: process.env.FE_URL,}), otpController.sendOtp)
+router.post('/api/auth/otp/authenticate', cors({origin: process.env.FE_URL,}), otpController.authenticateOtp)
 
 //get client by redirect_uri
-router.get('/api/auth/client/get_by_redirect_uri', cors({origin: [process.env.FE_URL],}), grantCodeController.getClientByRedirectUri)
+router.get('/api/auth/client/get_by_redirect_uri', cors({origin: process.env.FE_URL,}), grantCodeController.getClientByRedirectUri)
 
 module.exports = router;

@@ -3,6 +3,9 @@ package ipgeo
 import (
 	"access/helpers/jwtparse"
 	"access/helpers/responses"
+	"database/sql"
+	"os"
+	"strconv"
 
 	"context"
 	"encoding/json"
@@ -17,13 +20,22 @@ import (
 )
 
 type IpGeoMiddleware struct {
-	RedisClient *redis.Client
+	RedisClient   *redis.Client
+	MysqlInstance *sql.DB
 }
 
 type MarkedUserData struct {
 	Is_checked  int    `json:"is_checked"`
 	Checked_at  int64  `json:"checked_at"`
 	Last_2FA_at string `json:"last_2FA_at"`
+}
+
+type Country struct {
+	Id            int            `json:"id"`
+	Country_short sql.NullString `json:"country_short"`
+	Country_long  sql.NullString `json:"country_long"`
+	Region        sql.NullString `json:"region"`
+	City          sql.NullString `json:"city"`
 }
 
 func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
@@ -45,7 +57,7 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 		ips := strings.Split(r.Header.Get("X-FORWARDED-FOR"), ", ")
 		fmt.Printf("req ip addr: %s\n", ips[0])
 
-		if locationCheckV2(ips[0]) {
+		if locationCheckV2(ips[0], igmw.MysqlInstance) {
 			fmt.Printf("ip geo mdw out\n")
 			next.ServeHTTP(w, r)
 		} else {
@@ -62,7 +74,11 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 				}
 				json.Unmarshal([]byte(val), &markedUserData)
 				// nên set valid time ở env | default = 1 day
-				if markedUserData.Is_checked == 1 && (markedUserData.Checked_at+86400) > time.Now().Unix() {
+				cooldownTime, err := strconv.Atoi(os.Getenv("COOLDOWN_TIME"))
+				if err != nil {
+					cooldownTime = 86400
+				}
+				if markedUserData.Is_checked == 1 && (markedUserData.Checked_at+int64(cooldownTime)) > time.Now().Unix() {
 					fmt.Printf("ip geo mdw out\n")
 					next.ServeHTTP(w, r)
 					return
@@ -105,7 +121,7 @@ func (igmw *IpGeoMiddleware) Handler(next http.Handler) http.Handler {
 	})
 }
 
-func locationCheckV2(ipAddress string) bool {
+func locationCheckV2(ipAddress string, countriesdb *sql.DB) bool {
 	db, err := ip2location.OpenDB("./assets/IP2LOCATION-LITE-DB11/IP2LOCATION-LITE-DB11.BIN")
 	if err != nil {
 		fmt.Print(err)
@@ -128,9 +144,31 @@ func locationCheckV2(ipAddress string) bool {
 	// fmt.Printf("zipcode: %s\n", results.Zipcode)
 	// fmt.Printf("timezone: %s\n", results.Timezone)
 
-	if results.Country_short != "VN" || results.Country_long != "Viet Nam" {
-		return false
+	// query countries
+	countries, err := countriesdb.Query("SELECT * FROM countries")
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+	}
+	defer countries.Close()
+
+	for countries.Next() {
+		var country Country
+		err = countries.Scan(&country.Id, &country.Country_short, &country.Country_long, &country.Region, &country.City)
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+		}
+
+		// check country
+		if (country.Country_short.Valid && results.Country_short == country.Country_short.String) ||
+			(country.Country_long.Valid && results.Country_long == country.Country_long.String) {
+			fmt.Printf("valid ipgeo!\n")
+			return true
+		}
+
+		// check region - future implement
+
+		// check city - future implement
 	}
 
-	return true
+	return false
 }

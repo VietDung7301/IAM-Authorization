@@ -58,10 +58,8 @@ const logout = async () => {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams ({
             Authorization: `Bearer ${access_token.value}`
-        })
+        },
     })
 
     if (data.value) {
@@ -85,10 +83,8 @@ const logoutAll = async () => {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams ({
             Authorization: `Bearer ${access_token.value}`
-        })
+        },
     })
 
     if (data.value) {

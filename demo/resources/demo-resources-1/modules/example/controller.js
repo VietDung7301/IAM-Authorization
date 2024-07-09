@@ -109,7 +109,7 @@ exports.getStudents = async (req, res) => {
 }
 
 exports.getStudentById = async (req, res) => {
-	let id = req.params.id
+	let id = req.query.id
 	if (id == '1') {
 		res.status(200).json({
 			name: 'Hoàng Việt Dũng',

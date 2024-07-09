@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware((to) => {
     if (access_token.value && to?.name === 'login') {
         return navigateTo('/');
     }
-    if (!access_token.value && (to?.name === 'students')) {
+    if (!access_token.value && (to?.name === 'students' || to?.name === 'profile')) {
         abortNavigation();
         return navigateTo('/login');
     }

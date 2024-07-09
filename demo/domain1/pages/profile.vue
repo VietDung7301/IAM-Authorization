@@ -142,7 +142,7 @@ const { data, error } = await useFetch(config.public.RESOURCE_ENDPOINT,
             }
 			options.body = new URLSearchParams({
 								method: 'GET',
-                                url: `${config.public.EX_RESOURCE_2}/${user_id.value}`,
+                                url: `${config.public.EX_RESOURCE_2}?id=${user_id.value}`,
                                 content_type: 'application/json',
 							})
 		},

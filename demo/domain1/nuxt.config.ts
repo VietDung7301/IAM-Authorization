@@ -18,7 +18,8 @@ export default defineNuxtConfig({
       SAVE_TOKEN_ENDPOINT: process.env.SAVE_TOKEN_ENDPOINT,
       GET_TOKEN_ENDPOINT: process.env.GET_TOKEN_ENDPOINT,
       LOGOUT_ENDPOINT: process.env.LOGOUT_ENDPOINT,
-      EX_RESOURCE_1: process.env.EX_RESOURCE_1
+      EX_RESOURCE_1: process.env.EX_RESOURCE_1,
+      EX_RESOURCE_2: process.env.EX_RESOURCE_2
     }
   },
   devServer: {

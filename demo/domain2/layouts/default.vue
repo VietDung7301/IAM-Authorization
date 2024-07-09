@@ -37,10 +37,10 @@
 					<li v-if="!authenticated"><NuxtLink to="#" class="cta bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded text-white font-semibold">Sign Up</nuxtLink>
 					</li>
 					<li v-if="authenticated">
-						<nuxtLink 
+						<button 
 							@click="logout"
 							class="cta border-blue-500 border hover:bg-slate-50 px-3 py-2 rounded text-blue font-semibold"
-						> Sign out</nuxtLink>
+						> Sign out</button>
 					</li>
 				</ul>
 			</div>
@@ -56,16 +56,16 @@
 	import { storeToRefs } from 'pinia'; // import storeToRefs helper hook from pinia
 	import { useAuthStore } from '~/store/auth'; // import the auth store we just created
 	const config = useRuntimeConfig()
+	const url = useRequestURL()
 
 	const router = useRouter();
 
-	const { logUserOut } = useAuthStore(); // use authenticateUser action from  auth store
 	const { authenticated } = storeToRefs(useAuthStore()); // make authenticated state reactive with storeToRefs
 
 	const navItems = ref([
 		{ link: '/', title: 'Home' },
 		{ link: '/students', title: 'Manage students' },
-		{ link: '#', title: 'Features' },
+		{ link: '/profile', title: 'Profile' },
 		{ link: '#', title: 'FAQ' },
 		{ link: '#', title: 'Contact' }
 	])
@@ -73,7 +73,13 @@
 	console.log(router.currentRoute.value.path)
 
 	const logout = () => {
-		logUserOut(config.public.LOGOUT_ENDPOINT, config.public.CLIENT_ID);
-		router.push('/');
+		navigateTo({
+			path: config.public.LOGOUT_ENDPOINT, 
+			query: {
+				redirect_uri: url.origin
+			}
+		}, {
+			external: true
+		})
 	}
 </script>

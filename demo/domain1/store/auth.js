@@ -25,6 +25,10 @@ export const useAuthStore = defineStore('auth', {
         const access_token = useCookie('access_token');
         const refresh_token = useCookie('refresh_token');
         const id_token = useCookie('id_token');
+        
+        if (!refresh_token.value) {
+          return null
+        } 
 
         const {data, error} = await useFetch(token_endpoint, {
           method: 'POST',
